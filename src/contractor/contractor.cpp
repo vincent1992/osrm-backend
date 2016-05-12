@@ -942,12 +942,12 @@ Contractor::WriteContractedGraph(unsigned max_node_id,
         // every target needs to be valid
         BOOST_ASSERT(current_edge.target <= max_used_node_id);
 #ifndef NDEBUG
-        if (current_edge.data.distance <= 0)
+        if (current_edge.data.weight <= 0)
         {
             util::SimpleLogger().Write(logWARNING)
                 << "Edge: " << edge << ",source: " << contracted_edge_list[edge].source
                 << ", target: " << contracted_edge_list[edge].target
-                << ", dist: " << current_edge.data.distance;
+                << ", dist: " << current_edge.data.weight;
 
             util::SimpleLogger().Write(logWARNING) << "Failed at adjacency list of node "
                                                    << contracted_edge_list[edge].source << "/"

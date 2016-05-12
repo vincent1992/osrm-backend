@@ -82,20 +82,20 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                      const bool force_loop_reverse) const
     {
         const NodeID node = forward_heap.DeleteMin();
-        const std::int32_t distance = forward_heap.GetKey(node);
+        const std::int32_t weight = forward_heap.GetKey(node);
 
         if (reverse_heap.WasInserted(node))
         {
-            const std::int32_t new_distance = reverse_heap.GetKey(node) + distance;
-            if (new_distance < upper_bound)
+            const std::int32_t new_weight = reverse_heap.GetKey(node) + weight;
+            if (new_weight < upper_bound)
             {
                 // if loops are forced, they are so at the source
-                if (new_distance >= 0 &&
+                if (new_weight >= 0 &&
                     (!force_loop_forward || forward_heap.GetData(node).parent != node) &&
                     (!force_loop_reverse || reverse_heap.GetData(node).parent != node))
                 {
                     middle_node_id = node;
-                    upper_bound = new_distance;
+                    upper_bound = new_weight;
                 }
                 else
                 {
@@ -110,12 +110,12 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                             const NodeID to = facade->GetTarget(edge);
                             if (to == node)
                             {
-                                const EdgeWeight edge_weight = data.distance;
-                                const std::int32_t loop_distance = new_distance + edge_weight;
-                                if (loop_distance >= 0 && loop_distance < upper_bound)
+                                const EdgeWeight edge_weight = data.weight;
+                                const std::int32_t loop_weight = new_weight + edge_weight;
+                                if (loop_weight >= 0 && loop_weight < upper_bound)
                                 {
                                     middle_node_id = node;
-                                    upper_bound = loop_distance;
+                                    upper_bound = loop_weight;
                                 }
                             }
                         }
@@ -124,10 +124,10 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             }
         }
 
-        // make sure we don't terminate too early if we initialize the distance
+        // make sure we don't terminate too early if we initialize the weight
         // for the nodes in the forward heap with the forward/reverse offset
         BOOST_ASSERT(min_edge_offset <= 0);
-        if (distance + min_edge_offset > upper_bound)
+        if (weight + min_edge_offset > upper_bound)
         {
             forward_heap.DeleteAll();
             return;
@@ -143,13 +143,13 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 if (reverse_flag)
                 {
                     const NodeID to = facade->GetTarget(edge);
-                    const EdgeWeight edge_weight = data.distance;
+                    const EdgeWeight edge_weight = data.weight;
 
                     BOOST_ASSERT_MSG(edge_weight > 0, "edge_weight invalid");
 
                     if (forward_heap.WasInserted(to))
                     {
-                        if (forward_heap.GetKey(to) + edge_weight < distance)
+                        if (forward_heap.GetKey(to) + edge_weight < weight)
                         {
                             return;
                         }
@@ -166,22 +166,22 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             {
 
                 const NodeID to = facade->GetTarget(edge);
-                const EdgeWeight edge_weight = data.distance;
+                const EdgeWeight edge_weight = data.weight;
 
                 BOOST_ASSERT_MSG(edge_weight > 0, "edge_weight invalid");
-                const int to_distance = distance + edge_weight;
+                const int to_weight = weight + edge_weight;
 
                 // New Node discovered -> Add to Heap + Node Info Storage
                 if (!forward_heap.WasInserted(to))
                 {
-                    forward_heap.Insert(to, to_distance, node);
+                    forward_heap.Insert(to, to_weight, node);
                 }
-                // Found a shorter Path -> Update distance
-                else if (to_distance < forward_heap.GetKey(to))
+                // Found a shorter Path -> Update weight
+                else if (to_weight < forward_heap.GetKey(to))
                 {
                     // new parent
                     forward_heap.GetData(to).parent = node;
-                    forward_heap.DecreaseKey(to, to_distance);
+                    forward_heap.DecreaseKey(to, to_weight);
                 }
             }
         }
@@ -198,7 +198,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 const NodeID to = facade->GetTarget(edge);
                 if (to == node)
                 {
-                    loop_weight = std::min(loop_weight, data.distance);
+                    loop_weight = std::min(loop_weight, data.weight);
                 }
             }
         }
@@ -247,7 +247,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             EdgeWeight edge_weight = std::numeric_limits<EdgeWeight>::max();
             for (const auto edge_id : facade->GetAdjacentEdgeRange(edge.first))
             {
-                const EdgeWeight weight = facade->GetEdgeData(edge_id).distance;
+                const EdgeWeight weight = facade->GetEdgeData(edge_id).weight;
                 if ((facade->GetTarget(edge_id) == edge.second) && (weight < edge_weight) &&
                     facade->GetEdgeData(edge_id).forward)
                 {
@@ -265,7 +265,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             {
                 for (const auto edge_id : facade->GetAdjacentEdgeRange(edge.second))
                 {
-                    const EdgeWeight weight = facade->GetEdgeData(edge_id).distance;
+                    const EdgeWeight weight = facade->GetEdgeData(edge_id).weight;
                     if ((facade->GetTarget(edge_id) == edge.first) && (weight < edge_weight) &&
                         facade->GetEdgeData(edge_id).backward)
                     {
@@ -333,7 +333,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 BOOST_ASSERT(unpacked_path.size() > 0);
                 unpacked_path.back().entry_classid = facade->GetEntryClassID(ed.id);
                 unpacked_path.back().turn_instruction = turn_instruction;
-                unpacked_path.back().duration_until_turn += (ed.distance - total_weight);
+                unpacked_path.back().duration_until_turn += (ed.weight - total_weight);
             }
         }
         std::size_t start_index = 0, end_index = 0;
@@ -418,7 +418,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
 
         // there is no equivalent to a node-based node in an edge-expanded graph.
         // two equivalent routes may start (or end) at different node-based edges
-        // as they are added with the offset how much "distance" on the edge
+        // as they are added with the offset how much "weight" on the edge
         // has already been traversed. Depending on offset one needs to remove
         // the last node.
         if (unpacked_path.size() > 1)
@@ -450,7 +450,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             EdgeWeight edge_weight = std::numeric_limits<EdgeWeight>::max();
             for (const auto edge_id : facade->GetAdjacentEdgeRange(edge.first))
             {
-                const EdgeWeight weight = facade->GetEdgeData(edge_id).distance;
+                const EdgeWeight weight = facade->GetEdgeData(edge_id).weight;
                 if ((facade->GetTarget(edge_id) == edge.second) && (weight < edge_weight) &&
                     facade->GetEdgeData(edge_id).forward)
                 {
@@ -463,7 +463,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             {
                 for (const auto edge_id : facade->GetAdjacentEdgeRange(edge.second))
                 {
-                    const EdgeWeight weight = facade->GetEdgeData(edge_id).distance;
+                    const EdgeWeight weight = facade->GetEdgeData(edge_id).weight;
                     if ((facade->GetTarget(edge_id) == edge.first) && (weight < edge_weight) &&
                         facade->GetEdgeData(edge_id).backward)
                     {
@@ -529,14 +529,14 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
     // a force loop, if the heaps have been initialized with positive offsets.
     void Search(SearchEngineData::QueryHeap &forward_heap,
                 SearchEngineData::QueryHeap &reverse_heap,
-                std::int32_t &distance,
+                std::int32_t &weight,
                 std::vector<NodeID> &packed_leg,
                 const bool force_loop_forward,
                 const bool force_loop_reverse,
                 const int duration_upper_bound = INVALID_EDGE_WEIGHT) const
     {
         NodeID middle = SPECIAL_NODEID;
-        distance = duration_upper_bound;
+        weight = duration_upper_bound;
 
         // get offset to account for offsets on phantom nodes on compressed edges
         const auto min_edge_offset = std::min(0, forward_heap.MinKey());
@@ -553,7 +553,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 RoutingStep(forward_heap,
                             reverse_heap,
                             middle,
-                            distance,
+                            weight,
                             min_edge_offset,
                             true,
                             STALLING_ENABLED,
@@ -565,7 +565,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 RoutingStep(reverse_heap,
                             forward_heap,
                             middle,
-                            distance,
+                            weight,
                             min_edge_offset,
                             false,
                             STALLING_ENABLED,
@@ -575,18 +575,18 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
         }
 
         // No path found for both target nodes?
-        if (duration_upper_bound <= distance || SPECIAL_NODEID == middle)
+        if (duration_upper_bound <= weight || SPECIAL_NODEID == middle)
         {
-            distance = INVALID_EDGE_WEIGHT;
+            weight = INVALID_EDGE_WEIGHT;
             return;
         }
 
         // Was a paths over one of the forward/reverse nodes not found?
-        BOOST_ASSERT_MSG((SPECIAL_NODEID != middle && INVALID_EDGE_WEIGHT != distance),
+        BOOST_ASSERT_MSG((SPECIAL_NODEID != middle && INVALID_EDGE_WEIGHT != weight),
                          "no path found");
 
         // make sure to correctly unpack loops
-        if (distance != forward_heap.GetKey(middle) + reverse_heap.GetKey(middle))
+        if (weight != forward_heap.GetKey(middle) + reverse_heap.GetKey(middle))
         {
             // self loop makes up the full path
             packed_leg.push_back(middle);
@@ -611,14 +611,14 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                         SearchEngineData::QueryHeap &reverse_heap,
                         SearchEngineData::QueryHeap &forward_core_heap,
                         SearchEngineData::QueryHeap &reverse_core_heap,
-                        int &distance,
+                        int &weight,
                         std::vector<NodeID> &packed_leg,
                         const bool force_loop_forward,
                         const bool force_loop_reverse,
                         int duration_upper_bound = INVALID_EDGE_WEIGHT) const
     {
         NodeID middle = SPECIAL_NODEID;
-        distance = duration_upper_bound;
+        weight = duration_upper_bound;
 
         std::vector<std::pair<NodeID, EdgeWeight>> forward_entry_points;
         std::vector<std::pair<NodeID, EdgeWeight>> reverse_entry_points;
@@ -645,7 +645,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                     RoutingStep(forward_heap,
                                 reverse_heap,
                                 middle,
-                                distance,
+                                weight,
                                 min_edge_offset,
                                 true,
                                 STALLING_ENABLED,
@@ -666,7 +666,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                     RoutingStep(reverse_heap,
                                 forward_heap,
                                 middle,
-                                distance,
+                                weight,
                                 min_edge_offset,
                                 false,
                                 STALLING_ENABLED,
@@ -676,13 +676,12 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             }
         }
         // TODO check if unordered_set might be faster
-        // sort by id and increasing by distance
+        // sort by id and increasing by weight
         auto entry_point_comparator = [](const std::pair<NodeID, EdgeWeight> &lhs,
                                          const std::pair<NodeID, EdgeWeight> &rhs) {
             return lhs.first < rhs.first || (lhs.first == rhs.first && lhs.second < rhs.second);
         };
         std::sort(forward_entry_points.begin(), forward_entry_points.end(), entry_point_comparator);
-        std::sort(reverse_entry_points.begin(), reverse_entry_points.end(), entry_point_comparator);
 
         NodeID last_id = SPECIAL_NODEID;
         forward_core_heap.Clear();
@@ -722,12 +721,12 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
         // run two-target Dijkstra routing step on core with termination criterion
         const constexpr bool STALLING_DISABLED = false;
         while (0 < forward_core_heap.Size() && 0 < reverse_core_heap.Size() &&
-               distance > (forward_core_heap.MinKey() + reverse_core_heap.MinKey()))
+               weight > (forward_core_heap.MinKey() + reverse_core_heap.MinKey()))
         {
             RoutingStep(forward_core_heap,
                         reverse_core_heap,
                         middle,
-                        distance,
+                        weight,
                         min_core_edge_offset,
                         true,
                         STALLING_DISABLED,
@@ -737,7 +736,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             RoutingStep(reverse_core_heap,
                         forward_core_heap,
                         middle,
-                        distance,
+                        weight,
                         min_core_edge_offset,
                         false,
                         STALLING_DISABLED,
@@ -746,20 +745,20 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
         }
 
         // No path found for both target nodes?
-        if (duration_upper_bound <= distance || SPECIAL_NODEID == middle)
+        if (duration_upper_bound <= weight || SPECIAL_NODEID == middle)
         {
-            distance = INVALID_EDGE_WEIGHT;
+            weight = INVALID_EDGE_WEIGHT;
             return;
         }
 
         // Was a paths over one of the forward/reverse nodes not found?
-        BOOST_ASSERT_MSG((SPECIAL_NODEID != middle && INVALID_EDGE_WEIGHT != distance),
+        BOOST_ASSERT_MSG((SPECIAL_NODEID != middle && INVALID_EDGE_WEIGHT != weight),
                          "no path found");
 
         // we need to unpack sub path from core heaps
         if (facade->IsCoreNode(middle))
         {
-            if (distance != forward_core_heap.GetKey(middle) + reverse_core_heap.GetKey(middle))
+            if (weight != forward_core_heap.GetKey(middle) + reverse_core_heap.GetKey(middle))
             {
                 // self loop
                 BOOST_ASSERT(forward_core_heap.GetData(middle).parent == middle &&
@@ -781,7 +780,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
         }
         else
         {
-            if (distance != forward_heap.GetKey(middle) + reverse_heap.GetKey(middle))
+            if (weight != forward_heap.GetKey(middle) + reverse_heap.GetKey(middle))
             {
                 // self loop
                 BOOST_ASSERT(forward_heap.GetData(middle).parent == middle &&
