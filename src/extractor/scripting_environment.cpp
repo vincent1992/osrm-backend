@@ -134,6 +134,8 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
              // .def(luabind::constructor<>())
              .def_readwrite("forward_speed", &ExtractionWay::forward_speed)
              .def_readwrite("backward_speed", &ExtractionWay::backward_speed)
+             .def_readwrite("forward_weight_per_meter", &ExtractionWay::forward_weight_per_meter)
+             .def_readwrite("backward_weight_per_meter", &ExtractionWay::backward_weight_per_meter)
              .def_readwrite("name", &ExtractionWay::name)
              .def_readwrite("pronunciation", &ExtractionWay::pronunciation)
              .def_readwrite("destinations", &ExtractionWay::destinations)
@@ -141,6 +143,7 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
              .def_readwrite("is_access_restricted", &ExtractionWay::is_access_restricted)
              .def_readwrite("is_startpoint", &ExtractionWay::is_startpoint)
              .def_readwrite("duration", &ExtractionWay::duration)
+             .def_readwrite("weight", &ExtractionWay::weight)
              .property(
                  "forward_mode", &ExtractionWay::get_forward_mode, &ExtractionWay::set_forward_mode)
              .property("backward_mode",
@@ -159,14 +162,6 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
              .def("get_value_by_key", &get_value_by_key<osmium::Way>)
              .def("id", &osmium::Way::id)
              .def("get_nodes", get_nodes_for_way, luabind::return_stl_iterator),
-         luabind::class_<InternalExtractorEdge>("EdgeSource")
-             .def_readonly("source_coordinate", &InternalExtractorEdge::source_coordinate)
-             .def_readwrite("weight_data", &InternalExtractorEdge::weight_data),
-         luabind::class_<InternalExtractorEdge::WeightData>("WeightData")
-             .def_readwrite("speed", &InternalExtractorEdge::WeightData::speed),
-         luabind::class_<ExternalMemoryNode>("EdgeTarget")
-             .property("lon", &lonToDouble<ExternalMemoryNode>)
-             .property("lat", &latToDouble<ExternalMemoryNode>),
          luabind::class_<util::Coordinate>("Coordinate")
              .property("lon", &lonToDouble<util::Coordinate>)
              .property("lat", &latToDouble<util::Coordinate>),

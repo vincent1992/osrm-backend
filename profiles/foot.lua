@@ -68,6 +68,7 @@ properties.traffic_signal_penalty        = 2
 properties.u_turn_penalty                = 2
 properties.use_turn_restrictions         = false
 properties.continue_straight_at_waypoint = false
+properties.weight_name                   = 'duration'
 
 local fallback_names     = true
 
@@ -221,4 +222,9 @@ function way_function (way, result)
       result.backward_speed  = math.min(result.backward_speed, surface_speed)
     end
   end
+
+  -- we use the speed as metric
+  result.forward_weight_per_meter = result.forward_speed / 3.6
+  result.backward_weight_per_meter = result.backward_speed / 3.6
+  result.weight = result.duration
 end

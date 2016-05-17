@@ -306,44 +306,29 @@ void ExtractionContainers::PrepareEdges(lua_State *segment_state)
         }
 
         BOOST_ASSERT(edge_iterator->result.osm_target_id == node_iterator->node_id);
-        BOOST_ASSERT(edge_iterator->weight_data.speed >= 0);
         BOOST_ASSERT(edge_iterator->source_coordinate.lat !=
                      util::FixedLatitude(std::numeric_limits<int>::min()));
         BOOST_ASSERT(edge_iterator->source_coordinate.lon !=
                      util::FixedLongitude(std::numeric_limits<int>::min()));
 
+        const util::Coordinate target_coord{node_iterator->lon, node_iterator->lat};
         const double distance = util::coordinate_calculation::greatCircleDistance(
-            edge_iterator->source_coordinate,
-            util::Coordinate(node_iterator->lon, node_iterator->lat));
+            edge_iterator->source_coordinate, target_coord);
 
+        double weight = static_cast<double>(mapbox::util::apply_visitor(
+            detail::ToValueByEdge(distance), edge_iterator->weight_data));
         if (has_segment_function)
         {
-            luabind::call_function<void>(segment_state,
-                                         "segment_function",
-                                         boost::cref(edge_iterator->source_coordinate),
-                                         boost::cref(*node_iterator),
-                                         distance,
-                                         boost::ref(edge_iterator->weight_data));
+            weight = luabind::call_function<double>(segment_state,
+                                                    "segment_function",
+                                                    edge_iterator->source_coordinate,
+                                                    target_coord,
+                                                    distance,
+                                                    weight);
         }
 
-        const double weight = [distance](const InternalExtractorEdge::WeightData &data) {
-            switch (data.type)
-            {
-            case InternalExtractorEdge::WeightType::EDGE_DURATION:
-            case InternalExtractorEdge::WeightType::WAY_DURATION:
-                return data.duration * 10.;
-                break;
-            case InternalExtractorEdge::WeightType::SPEED:
-                return (distance * 10.) / (data.speed / 3.6);
-                break;
-            case InternalExtractorEdge::WeightType::INVALID:
-                util::exception("invalid weight type");
-            }
-            return -1.0;
-        }(edge_iterator->weight_data);
-
         auto &edge = edge_iterator->result;
-        edge.weight = std::max(1, static_cast<int>(std::floor(weight + .5)));
+        edge.weight = std::max<EdgeWeight>(1, std::round(weight * 10.));
 
         // assign new node id
         auto id_iter = external_to_internal_node_id_map.find(node_iterator->node_id);

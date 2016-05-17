@@ -137,6 +137,7 @@ properties.u_turn_penalty                  = 20
 properties.traffic_signal_penalty          = 2
 properties.use_turn_restrictions           = true
 properties.continue_straight_at_waypoint   = true
+properties.weight_name                     = 'duration'
 
 local side_road_speed_multiplier = 0.8
 
@@ -316,7 +317,7 @@ function way_function (way, result)
     result.backward_speed = min(result.backward_speed, max_speed)
   end
 
-  if -1 == result.forward_speed and -1 == result.backward_speed then
+  if result.forward_speed < 0 and result.backward_speed < 0 then
     return
   end
 
@@ -336,10 +337,6 @@ function way_function (way, result)
   if surface and surface_speeds[surface] then
     result.forward_speed = math.min(surface_speeds[surface], result.forward_speed)
     result.backward_speed = math.min(surface_speeds[surface], result.backward_speed)
-  end
-  if tracktype and tracktype_speeds[tracktype] then
-    result.forward_speed = math.min(tracktype_speeds[tracktype], result.forward_speed)
-    result.backward_speed = math.min(tracktype_speeds[tracktype], result.backward_speed)
   end
   if smoothness and smoothness_speeds[smoothness] then
     result.forward_speed = math.min(smoothness_speeds[smoothness], result.forward_speed)
@@ -469,6 +466,7 @@ function way_function (way, result)
       penalized_speed = result.forward_speed / 2
     end
     result.forward_speed = math.min(penalized_speed, scaled_speed)
+    result.forward_weight_per_meter = result.forward_speed / 3.6
   end
 
   if result.backward_speed > 0 then
@@ -478,10 +476,14 @@ function way_function (way, result)
       penalized_speed = result.backward_speed / 2
     end
     result.backward_speed = math.min(penalized_speed, scaled_speed)
+    result.backward_weight_per_meter = result.backward_speed / 3.6
   end
 
   -- only allow this road as start point if it not a ferry
   result.is_startpoint = result.forward_mode == mode.driving or result.backward_mode == mode.driving
+
+  -- we use the speed as metric
+  result.weight = result.duration
 end
 
 function turn_function (angle)

@@ -110,4 +110,8 @@ function way_function (way, result)
   if junction == 'roundabout' then
     result.roundabout = true
   end
+
+  result.forward_weight_per_meter = result.forward_speed / 3.6
+  result.backward_weight_per_meter = result.backward_speed / 3.6
+  result.weight = result.duration
 end

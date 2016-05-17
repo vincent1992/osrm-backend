@@ -36,6 +36,7 @@ struct ProfileProperties
     int u_turn_penalty;
     bool continue_straight_at_waypoint;
     bool use_turn_restrictions;
+    std::string weight_name;
 };
 }
 }
