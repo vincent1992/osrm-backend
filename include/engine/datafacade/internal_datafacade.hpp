@@ -668,6 +668,22 @@ class InternalDataFacade final : public BaseDataFacade
                       });
     }
 
+    virtual void
+    GetUncompressedDurations(const EdgeID id,
+                           std::vector<EdgeWeight> &result_durations) const override final
+    {
+        const unsigned begin = m_geometry_indices.at(id);
+        const unsigned end = m_geometry_indices.at(id + 1);
+
+        result_durations.clear();
+        result_durations.reserve(end - begin);
+        std::for_each(m_geometry_list.begin() + begin, m_geometry_list.begin() + end,
+                      [&](const osrm::extractor::CompressedEdgeContainer::CompressedEdge &edge)
+                      {
+                          result_durations.emplace_back(edge.duration);
+                      });
+    }
+
     // Returns the data source ids that were used to supply the edge
     // weights.
     virtual void

@@ -299,12 +299,12 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                                                 id_vector);
                 BOOST_ASSERT(id_vector.size() > 0);
 
-                std::vector<EdgeWeight> weight_vector;
-                facade->GetUncompressedWeights(facade->GetGeometryIndexForEdgeID(ed.id),
-                                               weight_vector);
+                std::vector<EdgeWeight> duration_vector;
+                facade->GetUncompressedDurations(facade->GetGeometryIndexForEdgeID(ed.id),
+                                               duration_vector);
                 BOOST_ASSERT(weight_vector.size() > 0);
 
-                auto total_weight = std::accumulate(weight_vector.begin(), weight_vector.end(), 0);
+                auto total_weight = std::accumulate(duration_vector.begin(), duration_vector.end(), 0);
 
                 BOOST_ASSERT(weight_vector.size() == id_vector.size());
                 const bool is_first_segment = unpacked_path.empty();
@@ -325,7 +325,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                     unpacked_path.push_back(
                         PathData{id_vector[i],
                                  name_index,
-                                 weight_vector[i],
+                                 duration_vector[i],
                                  extractor::guidance::TurnInstruction::NO_TURN(),
                                  travel_mode,
                                  INVALID_ENTRY_CLASSID});
@@ -333,6 +333,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 BOOST_ASSERT(unpacked_path.size() > 0);
                 unpacked_path.back().entry_classid = facade->GetEntryClassID(ed.id);
                 unpacked_path.back().turn_instruction = turn_instruction;
+                // FIXME this needs to be replaced by a turn penalty lookup
                 unpacked_path.back().duration_until_turn += (ed.weight - total_weight);
             }
         }

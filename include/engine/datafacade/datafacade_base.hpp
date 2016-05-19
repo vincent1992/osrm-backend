@@ -79,6 +79,11 @@ class BaseDataFacade
     virtual void GetUncompressedWeights(const EdgeID id,
                                         std::vector<EdgeWeight> &result_weights) const = 0;
 
+    // Gets the duration values for each segment in an uncompressed geometry.
+    // Should always be 1 shorter than GetUncompressedGeometry
+    virtual void GetUncompressedDurations(const EdgeID id,
+                                          std::vector<EdgeWeight> &result_durations) const = 0;
+
     // Returns the data source ids that were used to supply the edge
     // weights.  Will return an empty array when only the base profile is used.
     virtual void GetUncompressedDatasources(const EdgeID id,
