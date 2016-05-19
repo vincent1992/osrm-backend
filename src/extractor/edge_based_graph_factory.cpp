@@ -230,7 +230,7 @@ unsigned EdgeBasedGraphFactory::RenumberEdges()
             // oneway streets always require this self-loop. Other streets only if a u-turn plus
             // traversal
             // of the street takes longer than the loop
-            m_edge_based_node_weights.push_back(edge_data.distance +
+            m_edge_based_node_weights.push_back(edge_data.weight +
                                                 profile_properties.u_turn_penalty);
 
             BOOST_ASSERT(numbered_edges_count < m_node_based_graph->GetNumberOfEdges());
@@ -407,10 +407,10 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                 BOOST_ASSERT(!edge_data2.reversed);
 
                 // the following is the core of the loop.
-                unsigned distance = edge_data1.distance;
+                unsigned weight = edge_data1.weight;
                 if (m_traffic_lights.find(node_v) != m_traffic_lights.end())
                 {
-                    distance += profile_properties.traffic_signal_penalty;
+                    weight += profile_properties.traffic_signal_penalty;
                 }
 
                 const int turn_penalty =
@@ -419,10 +419,10 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
 
                 if (guidance::isUturn(turn_instruction))
                 {
-                    distance += profile_properties.u_turn_penalty;
+                    weight += profile_properties.u_turn_penalty;
                 }
 
-                distance += turn_penalty;
+                weight += turn_penalty;
 
                 BOOST_ASSERT(m_compressed_edge_container.HasEntryForID(edge_from_u));
                 original_edge_data_vector.emplace_back(
@@ -447,15 +447,15 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                 m_edge_based_edge_list.emplace_back(edge_data1.edge_id,
                                                     edge_data2.edge_id,
                                                     m_edge_based_edge_list.size(),
-                                                    distance,
+                                                    weight,
                                                     true,
                                                     false);
 
                 // Here is where we write out the mapping between the edge-expanded edges, and
-                // the node-based edges that are originally used to calculate the `distance`
+                // the node-based edges that are originally used to calculate the `weight`
                 // for the edge-expanded edges.  About 40 lines back, there is:
                 //
-                //                 unsigned distance = edge_data1.distance;
+                //                 unsigned weight = edge_data1.weight;
                 //
                 // This tells us that the weight for an edge-expanded-edge is based on the weight
                 // of the *source* node-based edge.  Therefore, we will look up the individual
@@ -465,7 +465,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                 // updates to the edge-expanded-edge based directly on its ID.
                 if (generate_edge_lookup)
                 {
-                    unsigned fixed_penalty = distance - edge_data1.distance;
+                    unsigned fixed_penalty = weight - edge_data1.weight;
                     edge_penalty_file.write(reinterpret_cast<const char *>(&fixed_penalty),
                                             sizeof(fixed_penalty));
                     const auto node_based_edges =
