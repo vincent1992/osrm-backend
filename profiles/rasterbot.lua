@@ -18,8 +18,6 @@ function way_function (way, result)
 
   result.forward_speed = 15
   result.backward_speed = 15
-  result.forward_weight_per_meter = result.forward_speed / 3.6
-  result.backward_weight_per_meter = result.backward_speed / 3.6
 end
 
 function source_function ()

@@ -137,7 +137,9 @@ properties.u_turn_penalty                  = 20
 properties.traffic_signal_penalty          = 2
 properties.use_turn_restrictions           = true
 properties.continue_straight_at_waypoint   = true
+-- this will use the duration and {forward/backward}_speed values as weight
 properties.weight_name                     = 'duration'
+--properties.weight_name                     = 'distance'
 
 local side_road_speed_multiplier = 0.8
 
@@ -466,7 +468,6 @@ function way_function (way, result)
       penalized_speed = result.forward_speed / 2
     end
     result.forward_speed = math.min(penalized_speed, scaled_speed)
-    result.forward_weight_per_meter = result.forward_speed / 3.6
   end
 
   if result.backward_speed > 0 then
@@ -476,14 +477,19 @@ function way_function (way, result)
       penalized_speed = result.backward_speed / 2
     end
     result.backward_speed = math.min(penalized_speed, scaled_speed)
-    result.backward_weight_per_meter = result.backward_speed / 3.6
+  end
+
+  if properties.weight_name == 'distance' then
+    if duration > 0 or result.forward_speed > 0 then
+      result.forward_weight_per_meter = 1
+    end
+    if duration > 0 or result.backward_speed > 0 then
+      result.backward_weight_per_meter = 1
+    end
   end
 
   -- only allow this road as start point if it not a ferry
   result.is_startpoint = result.forward_mode == mode.driving or result.backward_mode == mode.driving
-
-  -- we use the speed as metric
-  result.weight = result.duration
 end
 
 function turn_function (angle)

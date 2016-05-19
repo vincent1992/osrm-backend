@@ -401,11 +401,6 @@ function way_function (way, result)
 
   -- maxspeed
   limit( result, maxspeed, maxspeed_forward, maxspeed_backward )
-
-  -- we use the speed as metric
-  result.forward_weight_per_meter = result.forward_speed / 3.6
-  result.backward_weight_per_meter = result.backward_speed / 3.6
-  result.weight = result.duration
 end
 
 function turn_function (angle)

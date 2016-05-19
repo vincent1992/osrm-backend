@@ -222,9 +222,4 @@ function way_function (way, result)
       result.backward_speed  = math.min(result.backward_speed, surface_speed)
     end
   end
-
-  -- we use the speed as metric
-  result.forward_weight_per_meter = result.forward_speed / 3.6
-  result.backward_weight_per_meter = result.backward_speed / 3.6
-  result.weight = result.duration
 end

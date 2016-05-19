@@ -301,12 +301,13 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
 
                 std::vector<EdgeWeight> duration_vector;
                 facade->GetUncompressedDurations(facade->GetGeometryIndexForEdgeID(ed.id),
-                                               duration_vector);
-                BOOST_ASSERT(weight_vector.size() > 0);
+                                                 duration_vector);
+                BOOST_ASSERT(duration_vector.size() > 0);
 
-                auto total_weight = std::accumulate(duration_vector.begin(), duration_vector.end(), 0);
+                auto total_weight =
+                    std::accumulate(duration_vector.begin(), duration_vector.end(), 0);
 
-                BOOST_ASSERT(weight_vector.size() == id_vector.size());
+                BOOST_ASSERT(duration_vector.size() == id_vector.size());
                 const bool is_first_segment = unpacked_path.empty();
 
                 const std::size_t start_index =

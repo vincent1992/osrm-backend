@@ -93,9 +93,6 @@ int Extractor::run()
         util::SimpleLogger().Write() << "Profile: " << config.profile_path.filename().string();
         util::SimpleLogger().Write() << "Threads: " << number_of_threads;
 
-        ExtractionContainers extraction_containers;
-        auto extractor_callbacks = util::make_unique<ExtractorCallbacks>(extraction_containers);
-
         const osmium::io::File input_file(config.input_path.string());
         osmium::io::Reader reader(input_file);
         const osmium::io::Header header = reader.header();
@@ -109,6 +106,9 @@ int Extractor::run()
         TIMER_START(parsing);
 
         auto &main_context = scripting_environment.GetContex();
+        ExtractionContainers extraction_containers;
+        auto extractor_callbacks =
+            util::make_unique<ExtractorCallbacks>(extraction_containers, main_context.properties);
 
         // setup raster sources
         if (util::luaFunctionExists(main_context.state, "source_function"))
