@@ -161,6 +161,8 @@ class BaseDataFacade
 
     virtual bool GetContinueStraightDefault() const = 0;
 
+    virtual const char* GetWeightName() const = 0;
+
     virtual BearingClassID GetBearingClassID(const NodeID id) const = 0;
 
     virtual util::guidance::BearingClass

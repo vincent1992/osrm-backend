@@ -95,7 +95,7 @@ properties.traffic_signal_penalty        = 2
 properties.use_turn_restrictions         = false
 properties.u_turn_penalty                = 20
 properties.continue_straight_at_waypoint = false
-properties.weight_name                   = 'duration'
+properties.weight_name                   = 'cyclebiliyt'
 
 local obey_oneway               = true
 local ignore_areas              = true
@@ -275,10 +275,6 @@ function way_function (way, result)
     -- regular ways
     result.forward_speed = bicycle_speeds[highway]
     result.backward_speed = bicycle_speeds[highway]
-    if safety_penalty < 1 and unsafe_highway_list[highway] then
-      result.forward_speed = result.forward_speed * safety_penalty
-      result.backward_speed = result.backward_speed * safety_penalty
-    end
   elseif access and access_tag_whitelist[access] then
     -- unknown way, but valid access tag
     result.forward_speed = default_speed
@@ -401,6 +397,30 @@ function way_function (way, result)
 
   -- maxspeed
   limit( result, maxspeed, maxspeed_forward, maxspeed_backward )
+
+  -- convert duration into cyclebility
+  local is_unsafe = safety_penalty < 1 and unsafe_highway_list[highway]
+  if result.forward_speed > 0 then
+    -- convert from km/h to m/s
+    result.forward_weight_by_meter = result.forward_speed / 3.6;
+    if is_unsafe then
+      result.forward_weight_by_meter = result.forward_weight_by_meter * safety_penalty
+    end
+  end
+  if result.backward_speed > 0 then
+    -- convert from km/h to m/s
+    result.backward_weight_by_meter = result.backward_speed / 3.6;
+    if is_unsafe then
+      result.backward_weight_by_meter = result.backward_weight_by_meter * safety_penalty
+    end
+  end
+  if result.duration > 0 then
+    -- convert from km/h to m/s
+    result.weight = result.duration;
+    if is_unsafe then
+      result.weight = result.weight * (1+safety_penalty)
+    end
+  end
 end
 
 function turn_function (angle)

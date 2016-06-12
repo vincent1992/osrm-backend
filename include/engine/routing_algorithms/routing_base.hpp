@@ -304,6 +304,11 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                                                  duration_vector);
                 BOOST_ASSERT(duration_vector.size() > 0);
 
+                std::vector<EdgeWeight> weight_vector;
+                facade->GetUncompressedWeights(facade->GetGeometryIndexForEdgeID(ed.id),
+                                                 weight_vector);
+                BOOST_ASSERT(weight_vector.size() > 0);
+
                 auto total_weight =
                     std::accumulate(duration_vector.begin(), duration_vector.end(), 0);
 
@@ -327,6 +332,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                         PathData{id_vector[i],
                                  name_index,
                                  duration_vector[i],
+                                 weight_vector[i],
                                  extractor::guidance::TurnInstruction::NO_TURN(),
                                  travel_mode,
                                  INVALID_ENTRY_CLASSID});
@@ -341,6 +347,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
         std::size_t start_index = 0, end_index = 0;
         std::vector<unsigned> id_vector;
         std::vector<EdgeWeight> duration_vector;
+        std::vector<EdgeWeight> weight_vector;
         const bool is_local_path = (phantom_node_pair.source_phantom.forward_packed_geometry_id ==
                                     phantom_node_pair.target_phantom.forward_packed_geometry_id) &&
                                    unpacked_path.empty();
@@ -352,6 +359,9 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
 
             facade->GetUncompressedDurations(
                 phantom_node_pair.target_phantom.reverse_packed_geometry_id, duration_vector);
+
+            facade->GetUncompressedWeights(
+                phantom_node_pair.target_phantom.reverse_packed_geometry_id, weight_vector);
 
             if (is_local_path)
             {
@@ -373,6 +383,9 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
 
             facade->GetUncompressedDurations(
                 phantom_node_pair.target_phantom.forward_packed_geometry_id, duration_vector);
+
+            facade->GetUncompressedWeights(
+                phantom_node_pair.target_phantom.forward_packed_geometry_id, weight_vector);
         }
 
         // Given the following compressed geometry:
@@ -390,6 +403,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 id_vector[i],
                 phantom_node_pair.target_phantom.name_id,
                 duration_vector[i],
+                weight_vector[i],
                 extractor::guidance::TurnInstruction::NO_TURN(),
                 target_traversed_in_reverse ? phantom_node_pair.target_phantom.backward_travel_mode
                                             : phantom_node_pair.target_phantom.forward_travel_mode,

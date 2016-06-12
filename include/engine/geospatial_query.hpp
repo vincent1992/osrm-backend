@@ -342,19 +342,23 @@ template <typename RTreeT, typename DataFacadeT> class GeospatialQuery
         // Find the node-based-edge that this belongs to, and directly
         // calculate the forward_weight, forward_offset, reverse_weight, reverse_offset
 
-        int forward_offset = 0, forward_weight = 0;
-        int reverse_offset = 0, reverse_weight = 0;
+        int forward_offset = 0, forward_weight = 0, forward_duration = 0;
+        int reverse_offset = 0, reverse_weight = 0, reverse_duration = 0;
 
         if (data.forward_packed_geometry_id != SPECIAL_EDGEID)
         {
             std::vector<EdgeWeight> forward_weight_vector;
             datafacade.GetUncompressedWeights(data.forward_packed_geometry_id,
                                               forward_weight_vector);
+            std::vector<EdgeWeight> forward_duration_vector;
+            datafacade.GetUncompressedDurations(data.forward_packed_geometry_id,
+                                              forward_duration_vector);
             for (std::size_t i = 0; i < data.fwd_segment_position; i++)
             {
                 forward_offset += forward_weight_vector[i];
             }
             forward_weight = forward_weight_vector[data.fwd_segment_position];
+            forward_duration = forward_duration_vector[data.fwd_segment_position];
         }
 
         if (data.reverse_packed_geometry_id != SPECIAL_EDGEID)
@@ -362,6 +366,9 @@ template <typename RTreeT, typename DataFacadeT> class GeospatialQuery
             std::vector<EdgeWeight> reverse_weight_vector;
             datafacade.GetUncompressedWeights(data.reverse_packed_geometry_id,
                                               reverse_weight_vector);
+            std::vector<EdgeWeight> reverse_duration_vector;
+            datafacade.GetUncompressedDurations(data.reverse_packed_geometry_id,
+                                              reverse_duration_vector);
 
             BOOST_ASSERT(data.fwd_segment_position < reverse_weight_vector.size());
 
@@ -373,6 +380,8 @@ template <typename RTreeT, typename DataFacadeT> class GeospatialQuery
             }
             reverse_weight =
                 reverse_weight_vector[reverse_weight_vector.size() - data.fwd_segment_position - 1];
+            reverse_duration =
+                reverse_duration_vector[reverse_duration_vector.size() - data.fwd_segment_position - 1];
         }
 
         ratio = std::min(1.0, std::max(0.0, ratio));
@@ -387,8 +396,10 @@ template <typename RTreeT, typename DataFacadeT> class GeospatialQuery
 
         auto transformed = PhantomNodeWithDistance{PhantomNode{data,
                                                                forward_weight,
-                                                               forward_offset,
                                                                reverse_weight,
+                                                               forward_duration,
+                                                               reverse_duration,
+                                                               forward_offset,
                                                                reverse_offset,
                                                                point_on_segment,
                                                                input_coordinate},

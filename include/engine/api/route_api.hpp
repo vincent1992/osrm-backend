@@ -202,19 +202,22 @@ class RouteAPI : public BaseAPI
             {
                 util::json::Array durations;
                 util::json::Array distances;
+                util::json::Array weights;
                 util::json::Array nodes;
                 auto &leg_geometry = leg_geometries[idx];
 
                 durations.values.reserve(leg_geometry.annotations.size());
                 distances.values.reserve(leg_geometry.annotations.size());
+                weights.values.reserve(leg_geometry.annotations.size());
                 nodes.values.reserve(leg_geometry.osm_node_ids.size());
 
                 std::for_each(
                     leg_geometry.annotations.begin(),
                     leg_geometry.annotations.end(),
-                    [this, &durations, &distances](const guidance::LegGeometry::Annotation &step) {
+                    [this, &durations, &distances, &weights](const guidance::LegGeometry::Annotation &step) {
                         durations.values.push_back(step.duration);
                         distances.values.push_back(step.distance);
+                        weights.values.push_back(step.weight);
                     });
                 std::for_each(leg_geometry.osm_node_ids.begin(),
                               leg_geometry.osm_node_ids.end(),
@@ -224,6 +227,7 @@ class RouteAPI : public BaseAPI
                 util::json::Object annotation;
                 annotation.values["distance"] = std::move(distances);
                 annotation.values["duration"] = std::move(durations);
+                annotation.values[facade.GetWeightName()] = std::move(weights);
                 annotation.values["nodes"] = std::move(nodes);
                 annotations.push_back(std::move(annotation));
             }
@@ -232,7 +236,8 @@ class RouteAPI : public BaseAPI
         auto result = json::makeRoute(route,
                                       json::makeRouteLegs(std::move(legs),
                                                           std::move(step_geometries),
-                                                          std::move(annotations)),
+                                                          std::move(annotations),
+                                                          facade.GetWeightName()),
                                       std::move(json_overview));
 
         return result;

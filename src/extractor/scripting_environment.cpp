@@ -106,6 +106,9 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
              .property("u_turn_penalty",
                        &ProfileProperties::GetUturnPenalty,
                        &ProfileProperties::SetUturnPenalty)
+             .property("weight_name",
+                       &ProfileProperties::SetWeightName,
+                       &ProfileProperties::GetWeightName)
              .def_readwrite("use_turn_restrictions", &ProfileProperties::use_turn_restrictions)
              .def_readwrite("continue_straight_at_waypoint",
                             &ProfileProperties::continue_straight_at_waypoint),

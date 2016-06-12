@@ -54,6 +54,7 @@ struct RouteStep
     std::string rotary_name;
     double duration;
     double distance;
+    double weight;
     extractor::TravelMode mode;
     StepManeuver maneuver;
     // indices into the locations array stored the LegGeometry
@@ -69,6 +70,7 @@ inline RouteStep getInvalidRouteStep()
             "",
             "",
             "",
+            0,
             0,
             0,
             TRAVEL_MODE_INACCESSIBLE,
