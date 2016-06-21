@@ -1,0 +1,30 @@
+machine:
+  xcode:
+    version: 7.3
+  environment:
+    XCODE_SCHEME: "no"
+    XCODE_WORKSPACE: "no"
+    JOBS: 8
+    CCACHE_TEMPDIR: /tmp/.ccache-temp
+    CCACHE_COMPRESS: 1
+    LLVM_VERSION: 3.8
+    BUILD_TYPE: Debug
+    BUILD_SHARED_LIBS: OFF
+    COVERAGE: OFF
+
+dependencies:
+  cache_directories:
+    - "~/.ccache"
+    - "~/.apt-cache"
+    - "mason_packages"
+  pre:
+    # https://discuss.circleci.com/t/add-ability-to-cache-apt-get-programs/598/3
+    - sudo rm -rf /var/cache/apt/archives && sudo ln -s ~/.apt-cache /var/cache/apt/archives && mkdir -p ~/.apt-cache/partial
+    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    - sudo apt-get update -y
+  override:
+    - sudo apt-get install -y libstdc++6 libstdc++-5-dev
+
+test:
+  override:
+    - ./scripts/circleci.sh $(pwd)/local-install
