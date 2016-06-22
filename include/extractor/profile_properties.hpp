@@ -1,8 +1,8 @@
 #ifndef PROFILE_PROPERTIES_HPP
 #define PROFILE_PROPERTIES_HPP
 
-#include <boost/numeric/conversion/cast.hpp>
 #include <boost/assert.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 
 namespace osrm
 {
@@ -38,7 +38,7 @@ struct ProfileProperties
         traffic_signal_penalty = boost::numeric_cast<int>(traffic_signal_penalty_ * 10.);
     }
 
-    void SetWeightName(const std::string& name)
+    void SetWeightName(const std::string &name)
     {
         auto length = std::min<std::size_t>(name.length(), MAX_WEIGHT_NAME_SIZE - 1);
         std::copy(name.c_str(), name.c_str() + length, weight_name);

@@ -70,7 +70,9 @@ inline LegGeometry assembleGeometry(const datafacade::BaseDataFacade &facade,
 
         prev_coordinate = coordinate;
         geometry.annotations.emplace_back(
-            LegGeometry::Annotation{current_distance, path_point.duration_until_turn / 10., path_point.weight_until_turn / 10.});
+            LegGeometry::Annotation{current_distance,
+                                    path_point.duration_until_turn / 10.,
+                                    path_point.weight_until_turn / 10.});
         geometry.locations.push_back(std::move(coordinate));
         geometry.osm_node_ids.push_back(facade.GetOSMNodeIDOfNode(path_point.turn_via_node));
     }
@@ -81,8 +83,8 @@ inline LegGeometry assembleGeometry(const datafacade::BaseDataFacade &facade,
     geometry.segment_distances.push_back(cumulative_distance);
     // FIXME this is wrong. We need to check for traversal direction here
     // and for the case of a local path (target and source on the same edge)
-    geometry.annotations.emplace_back(
-        LegGeometry::Annotation{current_distance, target_node.forward_duration / 10., target_node.forward_weight / 10.0});
+    geometry.annotations.emplace_back(LegGeometry::Annotation{
+        current_distance, target_node.forward_duration / 10., target_node.forward_weight / 10.0});
     geometry.segment_offsets.push_back(geometry.locations.size());
     geometry.locations.push_back(target_node.location);
 

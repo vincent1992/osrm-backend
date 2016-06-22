@@ -190,7 +190,8 @@ util::json::Object makeIntersection(const guidance::Intersection &intersection)
     return result;
 }
 
-util::json::Object makeRouteStep(guidance::RouteStep step, util::json::Value geometry, const char* weight_name)
+util::json::Object
+makeRouteStep(guidance::RouteStep step, util::json::Value geometry, const char *weight_name)
 {
     util::json::Object route_step;
     route_step.values["distance"] = std::round(step.distance * 10) / 10.;
@@ -264,7 +265,7 @@ makeRouteLeg(guidance::RouteLeg leg, util::json::Array steps, util::json::Object
 util::json::Array makeRouteLegs(std::vector<guidance::RouteLeg> legs,
                                 std::vector<util::json::Value> step_geometries,
                                 std::vector<util::json::Object> annotations,
-                                const char* weight_name)
+                                const char *weight_name)
 {
     util::json::Array json_legs;
     auto step_geometry_iter = step_geometries.begin();
@@ -277,7 +278,8 @@ util::json::Array makeRouteLegs(std::vector<guidance::RouteLeg> legs,
                        std::make_move_iterator(leg.steps.end()),
                        std::back_inserter(json_steps.values),
                        [&step_geometry_iter, weight_name](guidance::RouteStep step) {
-                           return makeRouteStep(std::move(step), std::move(*step_geometry_iter++), weight_name);
+                           return makeRouteStep(
+                               std::move(step), std::move(*step_geometry_iter++), weight_name);
                        });
         if (annotations.size() > 0)
         {

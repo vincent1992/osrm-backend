@@ -306,11 +306,10 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
 
                 std::vector<EdgeWeight> weight_vector;
                 facade->GetUncompressedWeights(facade->GetGeometryIndexForEdgeID(ed.id),
-                                                 weight_vector);
+                                               weight_vector);
                 BOOST_ASSERT(weight_vector.size() > 0);
 
-                auto total_weight =
-                    std::accumulate(weight_vector.begin(), weight_vector.end(), 0);
+                auto total_weight = std::accumulate(weight_vector.begin(), weight_vector.end(), 0);
                 auto total_duration =
                     std::accumulate(duration_vector.begin(), duration_vector.end(), 0);
 

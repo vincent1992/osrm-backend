@@ -109,7 +109,7 @@ struct PhantomNode
                                       (reverse_segment_id.id < number_of_nodes)) &&
                ((forward_weight != INVALID_EDGE_WEIGHT) ||
                 (reverse_weight != INVALID_EDGE_WEIGHT)) &&
-               ((forward_duration!= INVALID_EDGE_WEIGHT) ||
+               ((forward_duration != INVALID_EDGE_WEIGHT) ||
                 (reverse_duration != INVALID_EDGE_WEIGHT)) &&
                (component.id != INVALID_COMPONENTID) && (name_id != INVALID_NAMEID);
     }
