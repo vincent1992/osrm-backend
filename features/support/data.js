@@ -223,11 +223,11 @@ module.exports = function () {
             };
 
             ['osrm', 'osrm.ebg', 'osrm.edges', 'osrm.enw', 'osrm.fileIndex', 'osrm.geometry', 'osrm.icd',
-             'osrm.names', 'osrm.nodes', 'osrm.properties', 'osrm.ramIndex', 'osrm.restrictions'].forEach(file => {
+             'osrm.names', 'osrm.nodes', 'osrm.properties', 'osrm.ramIndex', 'osrm.restrictions', 'osrm.edge_penalties'].forEach(file => {
                  q.defer(rename, file);
              });
 
-            ['osrm.edge_penalties', 'osrm.edge_segment_lookup'].forEach(file => {
+            ['osrm.edge_penalties_index', 'osrm.edge_segment_lookup'].forEach(file => {
                 q.defer(renameIfExists, file);
             });
 
@@ -283,11 +283,11 @@ module.exports = function () {
 
             ['osrm', 'osrm.core', 'osrm.datasource_indexes', 'osrm.datasource_names', 'osrm.ebg','osrm.edges',
              'osrm.enw', 'osrm.fileIndex', 'osrm.geometry', 'osrm.hsgr', 'osrm.icd','osrm.level', 'osrm.names',
-             'osrm.nodes', 'osrm.properties', 'osrm.ramIndex', 'osrm.restrictions'].forEach((file) => {
+             'osrm.nodes', 'osrm.properties', 'osrm.ramIndex', 'osrm.restrictions', 'osrm.edge_penalties'].forEach((file) => {
                  q.defer(rename, file);
              });
 
-            ['osrm.edge_penalties', 'osrm.edge_segment_lookup'].forEach(file => {
+            ['osrm.edge_penalties_index', 'osrm.edge_segment_lookup'].forEach(file => {
                 q.defer(renameIfExists, file);
             });
 
