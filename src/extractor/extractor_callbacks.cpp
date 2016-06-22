@@ -28,7 +28,7 @@ namespace extractor
 ExtractorCallbacks::ExtractorCallbacks(ExtractionContainers &extraction_containers_,
                                        const ProfileProperties &properties_)
     : external_memory(extraction_containers_),
-      fallback_to_duration(properties_.weight_name == "duration")
+      fallback_to_duration(std::string(properties_.weight_name) == "duration")
 {
     // we reserved 0, 1, 2 for the empty case
     string_map[MapKey("", "")] = 0;
