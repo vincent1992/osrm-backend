@@ -310,9 +310,12 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 BOOST_ASSERT(weight_vector.size() > 0);
 
                 auto total_weight =
+                    std::accumulate(weight_vector.begin(), weight_vector.end(), 0);
+                auto total_duration =
                     std::accumulate(duration_vector.begin(), duration_vector.end(), 0);
 
                 BOOST_ASSERT(duration_vector.size() == id_vector.size());
+                BOOST_ASSERT(weight_vector.size() == id_vector.size());
                 const bool is_first_segment = unpacked_path.empty();
 
                 const std::size_t start_index =
@@ -342,6 +345,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 unpacked_path.back().turn_instruction = turn_instruction;
                 // FIXME this needs to be replaced by a turn penalty lookup
                 unpacked_path.back().duration_until_turn += (ed.weight - total_weight);
+                unpacked_path.back().weight_until_turn += (ed.weight - total_weight);
             }
         }
         std::size_t start_index = 0, end_index = 0;
@@ -428,8 +432,10 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
             // TODO this creates a scenario where it's possible the duration from a phantom
             // node to the first turn would be the same as from end to end of a segment,
             // which is obviously incorrect and not ideal...
+            unpacked_path.front().weight_until_turn =
+                std::max(unpacked_path.front().weight_until_turn - source_weight, 0);
             unpacked_path.front().duration_until_turn =
-                std::max(unpacked_path.front().duration_until_turn - source_weight, 0);
+                std::max(unpacked_path.front().duration_until_turn - source_duration, 0);
         }
 
         // there is no equivalent to a node-based node in an edge-expanded graph.
