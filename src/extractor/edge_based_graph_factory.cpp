@@ -452,7 +452,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                     edge_data1.edge_id, edge_data2.edge_id, turn_id, weight, true, false);
 
                 unsigned fixed_penalty = weight - edge_data1.weight;
-                BOOST_ASSERT(edge_penalty_file.tellp() == turn_id);
+                BOOST_ASSERT(edge_penalty_file.tellp() == turn_id * sizeof(fixed_penalty));
                 // save penalties index by turn_id
                 edge_penalty_file.write(reinterpret_cast<const char *>(&fixed_penalty),
                                         sizeof(fixed_penalty));
