@@ -382,13 +382,21 @@ EdgeID Contractor::LoadEdgeExpandedGraph(
     if (update_edge_weights || update_turn_penalties)
     {
         edge_segment_input_stream.open(edge_segment_lookup_filename, std::ios::binary);
-        edge_penalties_input_output_stream.open(edge_penalty_filename, std::ios::binary);
+        edge_penalties_input_output_stream.open(edge_penalty_filename, std::ios::binary | std::ios::in | std::ios::out);
         edge_penalties_index_input_stream.open(edge_penalty_index_filename, std::ios::binary);
-        if (!edge_segment_input_stream || !edge_penalties_input_output_stream ||
-            !edge_penalties_index_input_stream)
+        if (!edge_segment_input_stream)
         {
-            throw util::exception("Could not load .edge_segment_lookup, .edge_penalties or "
-                                  ".edge_penalties_index, did you "
+            throw util::exception("Could not load .edge_segment_lookup did you "
+                                  "run osrm-extract with '--generate-edge-lookup'?");
+        }
+        if (!edge_penalties_input_output_stream)
+        {
+            throw util::exception("Could not load .edge_penalties, did you "
+                                  "run osrm-extract with '--generate-edge-lookup'?");
+        }
+        if (!edge_penalties_index_input_stream)
+        {
+            throw util::exception("Could not load .edge_penalties_index, did you "
                                   "run osrm-extract with '--generate-edge-lookup'?");
         }
     }
