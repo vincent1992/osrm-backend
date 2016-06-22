@@ -61,6 +61,7 @@ class EdgeBasedGraphFactory
              lua_State *lua_state,
              const std::string &edge_segment_lookup_filename,
              const std::string &edge_penalty_filename,
+             const std::string &edge_penalty_index_filename,
              const bool generate_edge_lookup);
 
     // The following get access functions destroy the content in the factory
@@ -125,6 +126,7 @@ class EdgeBasedGraphFactory
                                    lua_State *lua_state,
                                    const std::string &edge_segment_lookup_filename,
                                    const std::string &edge_fixed_penalties_filename,
+                                   const std::string &edge_penalties_index_filename,
                                    const bool generate_edge_lookup);
 
     void InsertEdgeBasedNode(const NodeID u, const NodeID v);

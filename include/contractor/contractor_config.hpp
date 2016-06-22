@@ -50,6 +50,7 @@ struct ContractorConfig
         edge_based_graph_path = osrm_input_path.string() + ".ebg";
         edge_segment_lookup_path = osrm_input_path.string() + ".edge_segment_lookup";
         edge_penalty_path = osrm_input_path.string() + ".edge_penalties";
+        edge_penalty_index_path = osrm_input_path.string() + ".edge_penalties_index";
         node_based_graph_path = osrm_input_path.string() + ".nodes";
         geometry_path = osrm_input_path.string() + ".geometry";
         rtree_leaf_path = osrm_input_path.string() + ".fileIndex";
@@ -67,6 +68,7 @@ struct ContractorConfig
 
     std::string edge_segment_lookup_path;
     std::string edge_penalty_path;
+    std::string edge_penalty_index_path;
     std::string node_based_graph_path;
     std::string geometry_path;
     std::string rtree_leaf_path;

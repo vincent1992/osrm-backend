@@ -70,6 +70,7 @@ struct ExtractorConfig
         rtree_leafs_output_path = basepath + ".osrm.fileIndex";
         edge_segment_lookup_path = basepath + ".osrm.edge_segment_lookup";
         edge_penalty_path = basepath + ".osrm.edge_penalties";
+        edge_penalty_index_path = basepath + ".osrm.edge_penalties_index";
         edge_based_node_weights_output_path = basepath + ".osrm.enw";
         profile_properties_output_path = basepath + ".osrm.properties";
         intersection_class_data_output_path = basepath + ".osrm.icd";
@@ -98,6 +99,7 @@ struct ExtractorConfig
 
     bool generate_edge_lookup;
     std::string edge_penalty_path;
+    std::string edge_penalty_index_path;
     std::string edge_segment_lookup_path;
 };
 }

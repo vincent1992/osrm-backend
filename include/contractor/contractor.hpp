@@ -83,6 +83,7 @@ class Contractor
                           util::DeallocatingVector<extractor::EdgeBasedEdge> &edge_based_edge_list,
                           const std::string &edge_segment_lookup_path,
                           const std::string &edge_penalty_path,
+                          const std::string &edge_penalty_index_path,
                           const std::vector<std::string> &segment_speed_path,
                           const std::vector<std::string> &turn_penalty_path,
                           const std::string &nodes_filename,

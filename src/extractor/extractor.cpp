@@ -525,6 +525,7 @@ Extractor::BuildEdgeExpandedGraph(lua_State *lua_state,
                                  lua_state,
                                  config.edge_segment_lookup_path,
                                  config.edge_penalty_path,
+                                 config.edge_penalty_index_path,
                                  config.generate_edge_lookup);
 
     edge_based_graph_factory.GetEdgeBasedEdges(edge_based_edge_list);
