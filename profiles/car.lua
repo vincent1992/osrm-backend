@@ -493,11 +493,13 @@ function way_function (way, result)
 end
 
 function turn_function (angle)
+  duration_penalty = 0
   ---- compute turn penalty as angle^2, with a left/right bias
   k = turn_penalty/(90.0*90.0)
   if angle>=0 then
-    return angle*angle*k/turn_bias
+    duration_penalty = angle*angle*k/turn_bias
   else
-    return angle*angle*k*turn_bias
+    duration_penalty = angle*angle*k*turn_bias
   end
+  return duration_penalty
 end
