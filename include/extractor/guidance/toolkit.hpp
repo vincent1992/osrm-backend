@@ -44,12 +44,6 @@ using util::guidance::angularDeviation;
 namespace detail
 {
 const constexpr double DESIRED_SEGMENT_LENGTH = 10.0;
-const constexpr bool shiftable_ccw[] = {false, true, true, false, false, true, true, false};
-const constexpr bool shiftable_cw[] = {false, false, true, true, false, false, true, true};
-const constexpr std::uint8_t modifier_bounds[detail::num_direction_modifiers] = {
-    0, 36, 93, 121, 136, 163, 220, 255};
-
-const constexpr double discrete_angle_step_size = 360. / 24;
 
 template <typename IteratorType>
 util::Coordinate
@@ -154,161 +148,10 @@ getRepresentativeCoordinate(const NodeID from_node,
     }
 }
 
-// shift an instruction around the degree circle in CCW order
-inline DirectionModifier::Enum forcedShiftCCW(const DirectionModifier::Enum modifier)
-{
-    return static_cast<DirectionModifier::Enum>((static_cast<std::uint32_t>(modifier) + 1) %
-                                                detail::num_direction_modifiers);
-}
-
-inline DirectionModifier::Enum shiftCCW(const DirectionModifier::Enum modifier)
-{
-    if (detail::shiftable_ccw[static_cast<int>(modifier)])
-        return forcedShiftCCW(modifier);
-    else
-        return modifier;
-}
-
-// shift an instruction around the degree circle in CW order
-inline DirectionModifier::Enum forcedShiftCW(const DirectionModifier::Enum modifier)
-{
-    return static_cast<DirectionModifier::Enum>(
-        (static_cast<std::uint32_t>(modifier) + detail::num_direction_modifiers - 1) %
-        detail::num_direction_modifiers);
-}
-
-inline DirectionModifier::Enum shiftCW(const DirectionModifier::Enum modifier)
-{
-    if (detail::shiftable_cw[static_cast<int>(modifier)])
-        return forcedShiftCW(modifier);
-    else
-        return modifier;
-}
-
-inline bool isBasic(const TurnType::Enum type)
-{
-    return type == TurnType::Turn || type == TurnType::EndOfRoad;
-}
-
-inline bool isUturn(const TurnInstruction instruction)
-{
-    return isBasic(instruction.type) && instruction.direction_modifier == DirectionModifier::UTurn;
-}
-
-inline bool resolve(TurnInstruction &to_resolve, const TurnInstruction neighbor, bool resolve_cw)
-{
-    const auto shifted_turn = resolve_cw ? shiftCW(to_resolve.direction_modifier)
-                                         : shiftCCW(to_resolve.direction_modifier);
-    if (shifted_turn == neighbor.direction_modifier ||
-        shifted_turn == to_resolve.direction_modifier)
-        return false;
-
-    to_resolve.direction_modifier = shifted_turn;
-    return true;
-}
-
-inline bool resolveTransitive(TurnInstruction &first,
-                              TurnInstruction &second,
-                              const TurnInstruction third,
-                              bool resolve_cw)
-{
-    if (resolve(second, third, resolve_cw))
-    {
-        first.direction_modifier =
-            resolve_cw ? shiftCW(first.direction_modifier) : shiftCCW(first.direction_modifier);
-        return true;
-    }
-    return false;
-}
-
-inline bool isSlightTurn(const TurnInstruction turn)
-{
-    return (isBasic(turn.type) || turn.type == TurnType::NoTurn) &&
-           (turn.direction_modifier == DirectionModifier::Straight ||
-            turn.direction_modifier == DirectionModifier::SlightRight ||
-            turn.direction_modifier == DirectionModifier::SlightLeft);
-}
-
-inline bool isSlightModifier(const DirectionModifier::Enum direction_modifier)
-{
-    return (direction_modifier == DirectionModifier::Straight ||
-            direction_modifier == DirectionModifier::SlightRight ||
-            direction_modifier == DirectionModifier::SlightLeft);
-}
-
-inline bool isSharpTurn(const TurnInstruction turn)
-{
-    return isBasic(turn.type) && (turn.direction_modifier == DirectionModifier::SharpLeft ||
-                                  turn.direction_modifier == DirectionModifier::SharpRight);
-}
-
-inline bool isStraight(const TurnInstruction turn)
-{
-    return (isBasic(turn.type) || turn.type == TurnType::NoTurn) &&
-           turn.direction_modifier == DirectionModifier::Straight;
-}
-
-inline bool isConflict(const TurnInstruction first, const TurnInstruction second)
-{
-    return (first.type == second.type && first.direction_modifier == second.direction_modifier) ||
-           (isStraight(first) && isStraight(second));
-}
-
-inline DiscreteAngle discretizeAngle(const double angle)
-{
-    BOOST_ASSERT(angle >= 0. && angle <= 360.);
-    return DiscreteAngle(static_cast<std::uint8_t>(
-        (angle + 0.5 * detail::discrete_angle_step_size) / detail::discrete_angle_step_size));
-}
-
-inline double angleFromDiscreteAngle(const DiscreteAngle angle)
-{
-    return static_cast<double>(angle) * detail::discrete_angle_step_size +
-           0.5 * detail::discrete_angle_step_size;
-}
-
-inline double getAngularPenalty(const double angle, DirectionModifier::Enum modifier)
-{
-    // these are not aligned with getTurnDirection but represent an ideal center
-    const double center[] = {0, 45, 90, 135, 180, 225, 270, 315};
-    return angularDeviation(center[static_cast<int>(modifier)], angle);
-}
-
-inline double getTurnConfidence(const double angle, TurnInstruction instruction)
-{
-
-    // special handling of U-Turns and Roundabout
-    if (!isBasic(instruction.type) || instruction.direction_modifier == DirectionModifier::UTurn)
-        return 1.0;
-
-    const double deviations[] = {0, 45, 50, 30, 20, 30, 50, 45};
-    const double difference = getAngularPenalty(angle, instruction.direction_modifier);
-    const double max_deviation = deviations[static_cast<int>(instruction.direction_modifier)];
-    return 1.0 - (difference / max_deviation) * (difference / max_deviation);
-}
-
-inline bool canBeSuppressed(const TurnType::Enum type)
-{
-    if (type == TurnType::Turn)
-        return true;
-    return false;
-}
-
 inline bool isLowPriorityRoadClass(const FunctionalRoadClass road_class)
 {
     return road_class == FunctionalRoadClass::LOW_PRIORITY_ROAD ||
            road_class == FunctionalRoadClass::SERVICE;
-}
-
-inline bool isDistinct(const DirectionModifier::Enum first, const DirectionModifier::Enum second)
-{
-    if ((first + 1) % detail::num_direction_modifiers == second)
-        return false;
-
-    if ((second + 1) % detail::num_direction_modifiers == first)
-        return false;
-
-    return true;
 }
 
 inline std::pair<std::string, std::string> getPrefixAndSuffix(const std::string &data)
