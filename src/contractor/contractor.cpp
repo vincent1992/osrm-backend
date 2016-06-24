@@ -96,8 +96,8 @@ int Contractor::Run()
     EdgeID max_edge_id = LoadEdgeExpandedGraph(config.edge_based_graph_path,
                                                edge_based_edge_list,
                                                config.edge_segment_lookup_path,
-                                               config.edge_penalty_path,
-                                               config.edge_penalty_index_path,
+                                               config.turn_penalties_path,
+                                               config.turn_penalties_index_path,
                                                config.segment_speed_lookup_paths,
                                                config.turn_penalty_lookup_paths,
                                                config.node_based_graph_path,
@@ -354,8 +354,8 @@ EdgeID Contractor::LoadEdgeExpandedGraph(
     std::string const &edge_based_graph_filename,
     util::DeallocatingVector<extractor::EdgeBasedEdge> &edge_based_edge_list,
     const std::string &edge_segment_lookup_filename,
-    const std::string &edge_penalty_filename,
-    const std::string &edge_penalty_index_filename,
+    const std::string &turn_penalties_filename,
+    const std::string &turn_penalties_index_filename,
     const std::vector<std::string> &segment_speed_filenames,
     const std::vector<std::string> &turn_penalty_filenames,
     const std::string &nodes_filename,
@@ -376,28 +376,28 @@ EdgeID Contractor::LoadEdgeExpandedGraph(
     const bool update_turn_penalties = !turn_penalty_filenames.empty();
 
     boost::filesystem::ifstream edge_segment_input_stream;
-    boost::filesystem::ifstream edge_penalties_index_input_stream;
-    boost::filesystem::fstream edge_penalties_input_output_stream;
+    boost::filesystem::ifstream turn_penalties_index_input_stream;
+    boost::filesystem::fstream turn_penalties_input_output_stream;
 
     if (update_edge_weights || update_turn_penalties)
     {
         edge_segment_input_stream.open(edge_segment_lookup_filename, std::ios::binary);
-        edge_penalties_input_output_stream.open(edge_penalty_filename,
+        turn_penalties_input_output_stream.open(turn_penalties_filename,
                                                 std::ios::binary | std::ios::in | std::ios::out);
-        edge_penalties_index_input_stream.open(edge_penalty_index_filename, std::ios::binary);
+        turn_penalties_index_input_stream.open(turn_penalties_index_filename, std::ios::binary);
         if (!edge_segment_input_stream)
         {
             throw util::exception("Could not load .edge_segment_lookup did you "
                                   "run osrm-extract with '--generate-edge-lookup'?");
         }
-        if (!edge_penalties_input_output_stream)
+        if (!turn_penalties_input_output_stream)
         {
-            throw util::exception("Could not load .edge_penalties, did you "
+            throw util::exception("Could not load .turn_penalties, did you "
                                   "run osrm-extract with '--generate-edge-lookup'?");
         }
-        if (!edge_penalties_index_input_stream)
+        if (!turn_penalties_index_input_stream)
         {
-            throw util::exception("Could not load .edge_penalties_index, did you "
+            throw util::exception("Could not load .turn_penalties_index, did you "
                                   "run osrm-extract with '--generate-edge-lookup'?");
         }
     }
@@ -737,9 +737,9 @@ EdgeID Contractor::LoadEdgeExpandedGraph(
         if (update_edge_weights || update_turn_penalties)
         {
             // Processing-time edge updates
-            unsigned edge_penalty;
-            edge_penalties_input_output_stream.read(reinterpret_cast<char *>(&edge_penalty),
-                                                    sizeof(edge_penalty));
+            unsigned turn_penalty;
+            turn_penalties_input_output_stream.read(reinterpret_cast<char *>(&turn_penalty),
+                                                    sizeof(turn_penalty));
 
             int new_weight = 0;
 
@@ -788,19 +788,19 @@ EdgeID Contractor::LoadEdgeExpandedGraph(
             OSMNodeID from_id;
             OSMNodeID via_id;
             OSMNodeID to_id;
-            edge_penalties_index_input_stream.read(reinterpret_cast<char *>(&from_id),
+            turn_penalties_index_input_stream.read(reinterpret_cast<char *>(&from_id),
                                                    sizeof(from_id));
-            edge_penalties_index_input_stream.read(reinterpret_cast<char *>(&via_id),
+            turn_penalties_index_input_stream.read(reinterpret_cast<char *>(&via_id),
                                                    sizeof(via_id));
-            edge_penalties_index_input_stream.read(reinterpret_cast<char *>(&to_id), sizeof(to_id));
+            turn_penalties_index_input_stream.read(reinterpret_cast<char *>(&to_id), sizeof(to_id));
 
             const auto turn_iter =
                 turn_penalty_lookup.find(std::make_tuple(from_id, via_id, to_id));
             if (turn_iter != turn_penalty_lookup.end())
             {
-                edge_penalty = static_cast<int>(turn_iter->second.first * 10);
+                turn_penalty = static_cast<int>(turn_iter->second.first * 10);
 
-                if (edge_penalty + new_weight < compressed_edge_nodes)
+                if (turn_penalty + new_weight < compressed_edge_nodes)
                 {
                     util::SimpleLogger().Write(logWARNING)
                         << "turn penalty " << turn_iter->second.first << " for turn " << from_id
@@ -808,17 +808,17 @@ EdgeID Contractor::LoadEdgeExpandedGraph(
                         << " is too negative: clamping turn weight to " << compressed_edge_nodes;
                 }
 
-                if (edge_penalty + new_weight < compressed_edge_nodes)
+                if (turn_penalty + new_weight < compressed_edge_nodes)
                 {
                     new_weight = compressed_edge_nodes;
-                    edge_penalty = 0;
+                    turn_penalty = 0;
                 }
             }
 
-            inbuffer.weight = edge_penalty + new_weight;
+            inbuffer.weight = turn_penalty + new_weight;
             // update the turn penalty
-            edge_penalties_input_output_stream.write(reinterpret_cast<const char *>(&edge_penalty),
-                                                     sizeof(edge_penalty));
+            turn_penalties_input_output_stream.write(reinterpret_cast<const char *>(&turn_penalty),
+                                                     sizeof(turn_penalty));
         }
 
         edge_based_edge_list.emplace_back(std::move(inbuffer));

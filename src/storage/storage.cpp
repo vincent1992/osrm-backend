@@ -235,6 +235,19 @@ int Storage::Run()
     shared_layout_ptr->SetBlockSize<unsigned>(SharedDataLayout::CORE_MARKER,
                                               number_of_core_markers);
 
+    // load turn penalties
+    boost::filesystem::ifstream turn_penalties_file(config.turn_penalties_path);
+    if (!turn_penalties_file)
+    {
+        throw util::exception("Could not open " + config.turn_penalties_path.string() +
+                              " for reading.");
+    }
+    turn_penalties_file.seekg(0, turn_penalties_file.end);
+    auto turn_penalties_size = turn_penalties_file.tellg();
+    BOOST_ASSERT(turn_penalties_size % sizeof(unsigned) == 0);
+    shared_layout_ptr->SetBlockSize<unsigned>(SharedDataLayout::TURN_PENALTIES,
+                                              turn_penalties_size / sizeof(unsigned));
+
     // load coordinate size
     boost::filesystem::ifstream nodes_input_stream(config.nodes_data_path, std::ios::binary);
     if (!nodes_input_stream)
@@ -599,6 +612,11 @@ int Storage::Run()
             core_marker_ptr[bucket] = (value | (1u << offset));
         }
     }
+
+    // load turn penalties
+    unsigned *turn_penalties_ptr = shared_layout_ptr->GetBlockPtr<unsigned, true>(
+        shared_memory_ptr, SharedDataLayout::TURN_PENALTIES);
+    turn_penalties_file.read(reinterpret_cast<char *>(turn_penalties_ptr), turn_penalties_size);
 
     // load the nodes of the search graph
     QueryGraph::NodeArrayEntry *graph_node_list_ptr =

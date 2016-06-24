@@ -49,6 +49,7 @@ struct SharedDataLayout
         BEARING_BLOCKS,
         BEARING_VALUES,
         ENTRY_CLASS,
+        TURN_PENALTIES,
         NUM_BLOCKS
     };
 

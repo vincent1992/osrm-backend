@@ -126,7 +126,7 @@ class InternalDataFacade final : public BaseDataFacade
             throw util::exception("Could not open " + turn_penalties_path.string() +
                                   " for reading.");
         }
-        turn_penalties_stream.seekg(turn_penalties_stream.end);
+        turn_penalties_stream.seekg(0, turn_penalties_stream.end);
         auto size = turn_penalties_stream.tellg();
         BOOST_ASSERT(size % sizeof(unsigned) == 0);
         turn_penalties_stream.read(reinterpret_cast<char *>(m_turn_penalties.data()), size);

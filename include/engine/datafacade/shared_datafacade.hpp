@@ -253,6 +253,16 @@ class SharedDataFacade final : public BaseDataFacade
         m_is_core_node = std::move(is_core_node);
     }
 
+    void LoadTurnPenalties()
+    {
+        auto turn_penalties_ptr = data_layout->GetBlockPtr<unsigned>(
+            shared_memory, storage::SharedDataLayout::TURN_PENALTIES);
+        util::ShM<unsigned, true>::vector turn_penalties(
+            turn_penalties_ptr,
+            data_layout->num_entries[storage::SharedDataLayout::TURN_PENALTIES]);
+        m_turn_penalties = std::move(turn_penalties);
+    }
+
     void LoadGeometries()
     {
         auto geometries_index_ptr = data_layout->GetBlockPtr<unsigned>(
@@ -415,6 +425,7 @@ class SharedDataFacade final : public BaseDataFacade
                 LoadNodeAndEdgeInformation();
                 LoadGeometries();
                 LoadTimestamp();
+                LoadTurnPenalties();
                 LoadViaNodeList();
                 LoadNames();
                 LoadCoreInformation();
