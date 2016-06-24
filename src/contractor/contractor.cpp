@@ -382,7 +382,8 @@ EdgeID Contractor::LoadEdgeExpandedGraph(
     if (update_edge_weights || update_turn_penalties)
     {
         edge_segment_input_stream.open(edge_segment_lookup_filename, std::ios::binary);
-        edge_penalties_input_output_stream.open(edge_penalty_filename, std::ios::binary | std::ios::in | std::ios::out);
+        edge_penalties_input_output_stream.open(edge_penalty_filename,
+                                                std::ios::binary | std::ios::in | std::ios::out);
         edge_penalties_index_input_stream.open(edge_penalty_index_filename, std::ios::binary);
         if (!edge_segment_input_stream)
         {

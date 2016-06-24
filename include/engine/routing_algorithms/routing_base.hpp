@@ -344,7 +344,7 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 unpacked_path.back().turn_instruction = turn_instruction;
                 // FIXME this needs to be replaced by a turn penalty lookup
                 unpacked_path.back().duration_until_turn += (ed.weight - total_weight);
-                unpacked_path.back().weight_until_turn += (ed.weight - total_weight);
+                unpacked_path.back().weight_until_turn += facade->GetTurnPenaltyForEdgeID(ed.id);
             }
         }
         std::size_t start_index = 0, end_index = 0;

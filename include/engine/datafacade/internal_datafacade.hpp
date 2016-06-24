@@ -123,7 +123,8 @@ class InternalDataFacade final : public BaseDataFacade
         boost::filesystem::ifstream turn_penalties_stream(turn_penalties_path);
         if (!turn_penalties_stream)
         {
-            throw util::exception("Could not open " + turn_penalties_path.string() + " for reading.");
+            throw util::exception("Could not open " + turn_penalties_path.string() +
+                                  " for reading.");
         }
         turn_penalties_stream.seekg(turn_penalties_stream.end);
         auto size = turn_penalties_stream.tellg();
@@ -635,7 +636,14 @@ class InternalDataFacade final : public BaseDataFacade
 
     virtual unsigned GetGeometryIndexForEdgeID(const unsigned id) const override final
     {
-        return m_via_node_list.at(id);
+        BOOST_ASSERT(m_via_node_list.size() > id);
+        return m_via_node_list[id];
+    }
+
+    virtual unsigned GetTurnPenaltyForEdgeID(const unsigned id) const override final
+    {
+        BOOST_ASSERT(m_turn_penalties.size() > id);
+        return m_turn_penalties[id];
     }
 
     virtual std::size_t GetCoreSize() const override final { return m_is_core_node.size(); }
