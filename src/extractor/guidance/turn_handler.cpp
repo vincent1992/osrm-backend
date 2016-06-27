@@ -1,7 +1,7 @@
-#include "extractor/guidance/turn_handler.hpp"
 #include "extractor/guidance/constants.hpp"
 #include "extractor/guidance/intersection_scenario_three_way.hpp"
 #include "extractor/guidance/toolkit.hpp"
+#include "extractor/guidance/turn_handler.hpp"
 
 #include "util/guidance/toolkit.hpp"
 
@@ -80,24 +80,26 @@ Intersection TurnHandler::handleThreeWayTurn(const EdgeID via_edge, Intersection
     BOOST_ASSERT(intersection[0].turn.angle < 0.001);
     const auto isObviousOfTwo = [this, in_data](const ConnectedRoad road,
                                                 const ConnectedRoad other) {
-        const auto first_class =
-            node_based_graph.GetEdgeData(road.turn.eid).road_classification.road_class;
+        const auto first_classification =
+            node_based_graph.GetEdgeData(road.turn.eid).road_classification;
 
-        const auto second_class =
-            node_based_graph.GetEdgeData(other.turn.eid).road_classification.road_class;
+        const auto second_classification =
+            node_based_graph.GetEdgeData(other.turn.eid).road_classification;
 
-        const bool is_ramp = isRampClass(first_class);
-        const bool is_obvious_by_road_class =
-            (!is_ramp && (2 * getPriority(first_class) < getPriority(second_class))) ||
-            (!isLowPriorityRoadClass(first_class) && isLowPriorityRoadClass(second_class));
+        const bool is_ramp = first_classification.isRampClass();
+        const bool is_obvious_by_road_class = (!is_ramp && (2 * first_classification.getPriority() <
+                                                            second_classification.getPriority())) ||
+                                              (!first_classification.isLowPriorityRoadClass() &&
+                                               second_classification.isLowPriorityRoadClass());
 
         if (is_obvious_by_road_class)
             return true;
 
         const bool other_is_obvious_by_road_flass =
-            (!isRampClass(second_class) &&
-             (2 * getPriority(second_class) < getPriority(first_class))) ||
-            (!isLowPriorityRoadClass(second_class) && isLowPriorityRoadClass(first_class));
+            (!second_classification.isRampClass() &&
+             (2 * second_classification.getPriority() < first_classification.getPriority())) ||
+            (!second_classification.isLowPriorityRoadClass() &&
+             first_classification.isLowPriorityRoadClass());
 
         if (other_is_obvious_by_road_flass)
             return false;
@@ -131,10 +133,10 @@ Intersection TurnHandler::handleThreeWayTurn(const EdgeID via_edge, Intersection
     {
         if (intersection[1].entry_allowed && intersection[2].entry_allowed)
         {
-            const auto left_class = node_based_graph.GetEdgeData(intersection[2].turn.eid)
-                                        .road_classification.road_class;
-            const auto right_class = node_based_graph.GetEdgeData(intersection[1].turn.eid)
-                                         .road_classification.road_class;
+            const auto left_classification =
+                node_based_graph.GetEdgeData(intersection[2].turn.eid).road_classification;
+            const auto right_classification =
+                node_based_graph.GetEdgeData(intersection[1].turn.eid).road_classification;
             if (isObviousOfTwo(intersection[1], intersection[2]) &&
                 (second_data.name_id != in_data.name_id ||
                  first_data.name_id == second_data.name_id))
@@ -153,7 +155,7 @@ Intersection TurnHandler::handleThreeWayTurn(const EdgeID via_edge, Intersection
                 intersection[1].turn.instruction = {findBasicTurnType(via_edge, intersection[1]),
                                                     DirectionModifier::SlightRight};
             }
-            else if (canBeSeenAsFork(left_class, right_class))
+            else if (canBeSeenAsFork(left_classification, right_classification))
             {
                 assignFork(via_edge, intersection[2], intersection[1]);
             }
@@ -298,13 +300,13 @@ Intersection TurnHandler::handleComplexTurn(const EdgeID via_edge, Intersection 
         {
             auto &left = intersection[fork_range.second];
             auto &right = intersection[fork_range.first];
-            const auto left_class =
-                node_based_graph.GetEdgeData(left.turn.eid).road_classification.road_class;
-            const auto right_class =
-                node_based_graph.GetEdgeData(right.turn.eid).road_classification.road_class;
-            if (canBeSeenAsFork(left_class, right_class))
+            const auto left_classification =
+                node_based_graph.GetEdgeData(left.turn.eid).road_classification;
+            const auto right_classification =
+                node_based_graph.GetEdgeData(right.turn.eid).road_classification;
+            if (canBeSeenAsFork(left_classification, right_classification))
                 assignFork(via_edge, left, right);
-            else if (getPriority(left_class) > getPriority(right_class))
+            else if (left_classification.getPriority() > right_classification.getPriority())
             {
                 right.turn.instruction =
                     getInstructionForObvious(intersection.size(), via_edge, false, right);
@@ -385,12 +387,14 @@ std::size_t TurnHandler::findObviousTurn(const EdgeID via_edge,
         }
 
         const auto out_data = node_based_graph.GetEdgeData(intersection[i].turn.eid);
-        auto continue_class = node_based_graph.GetEdgeData(intersection[best_continue].turn.eid)
-                                  .road_classification.road_class;
+        auto continue_classification =
+            node_based_graph.GetEdgeData(intersection[best_continue].turn.eid).road_classification;
         if (intersection[i].entry_allowed && out_data.name_id == in_data.name_id &&
-            (best_continue == 0 || continue_class > out_data.road_classification.road_class ||
+            (best_continue == 0 ||
+             // FIXME:PROFILE  continue_classn > out_data.road_classification.road_class ||
+             continue_classification.getPriority() > out_data.road_classification.getPriority() ||
              (deviation < best_continue_deviation &&
-              out_data.road_classification.road_class == continue_class)))
+              out_data.road_classification == continue_classification)))
         {
             best_continue_deviation = deviation;
             best_continue = i;
@@ -405,10 +409,8 @@ std::size_t TurnHandler::findObviousTurn(const EdgeID via_edge,
 
     // has no obvious continued road
     if (best_continue == 0 || best_continue_deviation >= 2 * NARROW_TURN_ANGLE ||
-        (node_based_graph.GetEdgeData(intersection[best_continue].turn.eid)
-                 .road_classification.road_class ==
-             node_based_graph.GetEdgeData(intersection[best].turn.eid)
-                 .road_classification.road_class &&
+        (node_based_graph.GetEdgeData(intersection[best_continue].turn.eid).road_classification ==
+             node_based_graph.GetEdgeData(intersection[best].turn.eid).road_classification &&
          std::abs(best_continue_deviation) > 1 && best_deviation / best_continue_deviation < 0.75))
     {
         // Find left/right deviation
@@ -455,9 +457,8 @@ std::size_t TurnHandler::findObviousTurn(const EdgeID via_edge,
                 continue;
 
             if (angularDeviation(intersection[i].turn.angle, STRAIGHT_ANGLE) / deviation < 1.1 &&
-                continue_data.road_classification.road_class ==
-                    node_based_graph.GetEdgeData(intersection[i].turn.eid)
-                        .road_classification.road_class)
+                continue_data.road_classification ==
+                    node_based_graph.GetEdgeData(intersection[i].turn.eid).road_classification)
                 return 0;
         }
         return best_continue; // no obvious turn
@@ -704,13 +705,13 @@ void TurnHandler::handleDistinctConflict(const EdgeID via_edge,
         getTurnDirection(left.turn.angle) == DirectionModifier::SlightLeft ||
         getTurnDirection(right.turn.angle) == DirectionModifier::SlightRight)
     {
-        const auto left_class =
-            node_based_graph.GetEdgeData(left.turn.eid).road_classification.road_class;
-        const auto right_class =
-            node_based_graph.GetEdgeData(right.turn.eid).road_classification.road_class;
-        if (canBeSeenAsFork(left_class, right_class))
+        const auto left_classification =
+            node_based_graph.GetEdgeData(left.turn.eid).road_classification;
+        const auto right_classification =
+            node_based_graph.GetEdgeData(right.turn.eid).road_classification;
+        if (canBeSeenAsFork(left_classification, right_classification))
             assignFork(via_edge, left, right);
-        else if (getPriority(left_class) > getPriority(right_class))
+        else if (left_classification.getPriority() > right_classification.getPriority())
         {
             // FIXME this should possibly know about the actual roads?
             // here we don't know about the intersection size. To be on the save side,

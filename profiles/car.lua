@@ -12,6 +12,19 @@ access_tags_hierarchy = { "motorcar", "motor_vehicle", "vehicle", "access" }
 service_tag_restricted = { ["parking_aisle"] = true }
 restriction_exception_tags = { "motorcar", "motor_vehicle", "vehicle" }
 
+-- Guidance
+highway_priorities = { ["motorway"] = 0, ["motorway_link"] = 10, ["trunk"] = 2, ["trunk_link"] = 10, ["primary"] = 4, ["primary_link"] = 10, ["secondary"] = 6,
+                       ["secondary_link"] = 10, ["tertiary"] = 8, ["tertiary_link"] = 10, ["unclassified"] = 10, ["residential"] = 11, ["service"] = 12, ["living_street"] = 10 }
+default_highway_priority = 14;
+
+motorway_types = { ["motorway"] = true, ["motorway_link"] = true, ["trunk"] = true, ["trunk_link"] = true }
+
+road_types = { ["motorway"] = true, ["motorway_link"] = true, ["trunk"] = true, ["trunk_link"] = true, ["primary"] = true, ["primary_link"] = true,
+               ["secondary"] = true, ["secondary_link"] = true, ["tertiary"] = true, ["tertiary_link"] = true, ["unclassified"] = true, ["residential"] = true,
+               ["living_street"] = true }
+
+link_types = { ["motorway_link"] = true, ["trunk_link"] = true, ["primary_link"] = true, ["secondary_link"] = true, ["tertiary_link"] = true }
+
 -- A list of suffixes to suppress in name change instructions
 suffix_list = { "N", "NE", "E", "SE", "S", "SW", "W", "NW", "North", "South", "West", "East" }
 
@@ -221,7 +234,6 @@ local function getTurnLanes(way)
     return turn_lanes, turn_lanes_fw, turn_lanes_bw
 end
 
-
 local function parse_maxspeed(source)
   if not source then
     return 0
@@ -271,6 +283,25 @@ function node_function (node, result)
   if tag and "traffic_signals" == tag then
     result.traffic_lights = true
   end
+end
+
+local function setClassification (highway, result)
+    if motorway_types[highway] then
+        result.road_classification.motorway_class = true;
+    end
+    if link_types[highway] then
+        result.road_classification.link_class = true;
+    end
+    if highway_priorities[highway] ~= nil then
+        result.road_classification.priority = highway_priorities[highway]
+    else
+        result.road_classification.priority = default_highway_priority
+    end
+    if road_types[highway] then
+        result.road_classification.may_be_ignored = false;
+    else
+        result.road_classification.may_be_ignored = true;
+    end
 end
 
 function way_function (way, result)
@@ -340,7 +371,7 @@ function way_function (way, result)
     result.backward_speed = bridge_speed
   end
 
-  -- leave early of this way is not accessible
+  -- leave early if this way is not accessible
   if "" == highway then
     return
   end
@@ -401,6 +432,9 @@ function way_function (way, result)
     result.forward_speed = math.min(smoothness_speeds[smoothness], result.forward_speed)
     result.backward_speed = math.min(smoothness_speeds[smoothness], result.backward_speed)
   end
+
+  -- set the road classification based on guidance globals configuration
+  setClassification(highway,result)
 
   -- parse the remaining tags
   local name = way:get_value_by_key("name")

@@ -1,5 +1,5 @@
-#include "extractor/guidance/intersection_handler.hpp"
 #include "extractor/guidance/constants.hpp"
+#include "extractor/guidance/intersection_handler.hpp"
 #include "extractor/guidance/toolkit.hpp"
 
 #include "util/guidance/toolkit.hpp"
@@ -50,9 +50,9 @@ TurnType::Enum IntersectionHandler::findBasicTurnType(const EdgeID via_edge,
     const auto &in_data = node_based_graph.GetEdgeData(via_edge);
     const auto &out_data = node_based_graph.GetEdgeData(road.turn.eid);
 
-    bool on_ramp = isRampClass(in_data.road_classification.road_class);
+    bool on_ramp = in_data.road_classification.isRampClass();
 
-    bool onto_ramp = isRampClass(out_data.road_classification.road_class);
+    bool onto_ramp = out_data.road_classification.isRampClass();
 
     if (!on_ramp && onto_ramp)
         return TurnType::OnRamp;
@@ -132,10 +132,10 @@ void IntersectionHandler::assignFork(const EdgeID via_edge,
                                      ConnectedRoad &right) const
 {
     const auto &in_data = node_based_graph.GetEdgeData(via_edge);
-    const bool low_priority_left = isLowPriorityRoadClass(
-        node_based_graph.GetEdgeData(left.turn.eid).road_classification.road_class);
-    const bool low_priority_right = isLowPriorityRoadClass(
-        node_based_graph.GetEdgeData(right.turn.eid).road_classification.road_class);
+    const bool low_priority_left =
+        node_based_graph.GetEdgeData(left.turn.eid).road_classification.isLowPriorityRoadClass();
+    const bool low_priority_right =
+        node_based_graph.GetEdgeData(right.turn.eid).road_classification.isLowPriorityRoadClass();
     if ((angularDeviation(left.turn.angle, STRAIGHT_ANGLE) < MAXIMAL_ALLOWED_NO_TURN_DEVIATION &&
          angularDeviation(right.turn.angle, STRAIGHT_ANGLE) > FUZZY_ANGLE_DIFFERENCE))
     {

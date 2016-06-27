@@ -12,7 +12,6 @@
 #include "extractor/query_node.hpp"
 #include "extractor/suffix_table.hpp"
 
-#include "extractor/guidance/classification_data.hpp"
 #include "extractor/guidance/discrete_angle.hpp"
 #include "extractor/guidance/intersection.hpp"
 #include "extractor/guidance/turn_instruction.hpp"
@@ -148,12 +147,6 @@ getRepresentativeCoordinate(const NodeID from_node,
     }
 }
 
-inline bool isLowPriorityRoadClass(const FunctionalRoadClass road_class)
-{
-    return road_class == FunctionalRoadClass::LOW_PRIORITY_ROAD ||
-           road_class == FunctionalRoadClass::SERVICE;
-}
-
 inline std::pair<std::string, std::string> getPrefixAndSuffix(const std::string &data)
 {
     const auto suffix_pos = data.find_last_of(' ');
@@ -261,26 +254,6 @@ inline bool requiresNameAnnounced(const std::string &from,
         (names_are_equal && ref_is_removed) || is_suffix_change;
 
     return !obvious_change;
-}
-
-inline int getPriority(const FunctionalRoadClass road_class)
-{
-    // The road priorities indicate which roads can bee seen as more or less equal.
-    // They are used in Fork-Discovery. Possibly should be moved to profiles post v5?
-    // A fork can happen between road types that are at most 1 priority apart from each other
-    const constexpr int road_priority[] = {
-        10, 0, 10, 2, 10, 4, 10, 6, 10, 8, 10, 11, 10, 12, 10, 14};
-    return road_priority[static_cast<int>(road_class)];
-}
-
-inline bool canBeSeenAsFork(const FunctionalRoadClass first, const FunctionalRoadClass second)
-{
-    // forks require similar road categories
-    // Based on the priorities assigned above, we can set forks only if the road priorities match
-    // closely.
-    // Potentially we could include features like number of lanes here and others?
-    // Should also be moved to profiles
-    return std::abs(getPriority(first) - getPriority(second)) <= 1;
 }
 
 // To simplify handling of Left/Right hand turns, we can mirror turns and write an intersection

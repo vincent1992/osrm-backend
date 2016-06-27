@@ -3,6 +3,7 @@
 #include "extractor/extraction_node.hpp"
 #include "extractor/extraction_way.hpp"
 #include "extractor/extractor_callbacks.hpp"
+#include "extractor/guidance/road_classification.hpp"
 #include "extractor/restriction.hpp"
 
 #include "util/for_each_pair.hpp"
@@ -140,12 +141,8 @@ void ExtractorCallbacks::ProcessWay(const osmium::Way &input_way, const Extracti
     }
 
     // FIXME this need to be moved into the profiles
-    const char *data = input_way.get_value_by_key("highway");
-    guidance::RoadClassificationData road_classification;
-    if (data)
-    {
-        road_classification.road_class = guidance::functionalRoadClassFromTag(data);
-    }
+    const guidance::RoadClassification road_classification = parsed_way.road_classification;
+    std::cout << "Classification: " << road_classification.toString() << std::endl;
 
     const auto laneStringToDescription = [](std::string lane_string) -> TurnLaneDescription {
         if (lane_string.empty())
@@ -193,7 +190,8 @@ void ExtractorCallbacks::ProcessWay(const osmium::Way &input_way, const Extracti
             for (auto token_itr = inner_tokens.begin(); token_itr != inner_tokens.end();
                  ++token_itr)
             {
-                auto position = std::find(osm_lane_strings, osm_lane_strings + num_osm_tags, *token_itr);
+                auto position =
+                    std::find(osm_lane_strings, osm_lane_strings + num_osm_tags, *token_itr);
                 const auto translated_mask =
                     masks_by_osm_string[std::distance(osm_lane_strings, position)];
                 if (translated_mask == TurnLaneType::empty)
@@ -215,7 +213,7 @@ void ExtractorCallbacks::ProcessWay(const osmium::Way &input_way, const Extracti
     // convert the lane description into an ID and, if necessary, remembr the description in the
     // description_map
     const auto requestId = [&](std::string lane_string) {
-        if( lane_string.empty() )
+        if (lane_string.empty())
             return INVALID_LANE_DESCRIPTIONID;
         TurnLaneDescription lane_description = laneStringToDescription(std::move(lane_string));
 

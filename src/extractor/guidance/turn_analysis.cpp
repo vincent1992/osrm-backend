@@ -1,4 +1,4 @@
-#include "extractor/guidance/classification_data.hpp"
+#include "extractor/guidance/road_classification.hpp"
 #include "extractor/guidance/constants.hpp"
 #include "extractor/guidance/turn_analysis.hpp"
 
@@ -81,7 +81,8 @@ Intersection TurnAnalysis::assignTurnTypes(const NodeID from_nid,
     intersection = handleSliproads(via_eid, std::move(intersection));
 
     // Turn On Ramps Into Off Ramps, if we come from a motorway-like road
-    if (isMotorwayClass(node_based_graph.GetEdgeData(via_eid).road_classification.road_class))
+    if (node_based_graph.GetEdgeData(via_eid)
+            .road_classification.isMotorwayClass())
     {
         std::for_each(intersection.begin(), intersection.end(), [](ConnectedRoad &road) {
             if (road.turn.instruction.type == TurnType::OnRamp)
@@ -156,8 +157,8 @@ Intersection TurnAnalysis::handleSliproads(const EdgeID source_edge_id,
         [this, source_edge_data](const ConnectedRoad &road) {
             const auto road_edge_data = node_based_graph.GetEdgeData(road.turn.eid);
             // Test to see if the source edge and the one we're looking at are the same road
-            return road_edge_data.road_classification.road_class ==
-                       source_edge_data.road_classification.road_class &&
+            return road_edge_data.road_classification ==
+                       source_edge_data.road_classification &&
                    road_edge_data.name_id != EMPTY_NAMEID &&
                    road_edge_data.name_id == source_edge_data.name_id && road.entry_allowed &&
                    angularDeviation(road.turn.angle, STRAIGHT_ANGLE) < FUZZY_ANGLE_DIFFERENCE;
