@@ -91,6 +91,23 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
                       luabind::value("river_up", TRAVEL_MODE_RIVER_UP),
                       luabind::value("river_down", TRAVEL_MODE_RIVER_DOWN),
                       luabind::value("route", TRAVEL_MODE_ROUTE)],
+
+         luabind::class_<extractor::guidance::RoadClass::Enum>("road_class")
+             .enum_("enums")[luabind::value("motorway", extractor::guidance::RoadClass::MOTORWAY),
+                             luabind::value("trunk", extractor::guidance::RoadClass::TRUNK),
+                             luabind::value("primary", extractor::guidance::RoadClass::PRIMARY),
+                             luabind::value("secondary", extractor::guidance::RoadClass::SECONDARY),
+                             luabind::value("tertiary", extractor::guidance::RoadClass::TERTIARY),
+                             luabind::value("main_residential",
+                                            extractor::guidance::RoadClass::MAIN_RESIDENTIAL),
+                             luabind::value("side_residential",
+                                            extractor::guidance::RoadClass::SIDE_RESIDENTIAL),
+                             luabind::value("link_road", extractor::guidance::RoadClass::LINK_ROAD),
+                             luabind::value("bike_path", extractor::guidance::RoadClass::BIKE_PATH),
+                             luabind::value("foot_path", extractor::guidance::RoadClass::FOOT_PATH),
+                             luabind::value("connectivity",
+                                            extractor::guidance::RoadClass::CONNECTIVITY)],
+
          luabind::class_<SourceContainer>("sources")
              .def(luabind::constructor<>())
              .def("load", &SourceContainer::LoadRasterSource)
@@ -131,20 +148,20 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
              .def_readwrite("traffic_lights", &ExtractionNode::traffic_lights)
              .def_readwrite("barrier", &ExtractionNode::barrier),
 
-        // road classification to be set in profile
-        luabind::class_<guidance::RoadClassification>("RoadClassification")
+         // road classification to be set in profile
+         luabind::class_<guidance::RoadClassification>("RoadClassification")
              .property("motorway_class",
-                  &guidance::RoadClassification::isMotorwayClass,
-                  &guidance::RoadClassification::setMotorwayFlag)
+                       &guidance::RoadClassification::isMotorwayClass,
+                       &guidance::RoadClassification::setMotorwayFlag)
              .property("link_class",
-                  &guidance::RoadClassification::isLinkClass,
-                  &guidance::RoadClassification::setLinkClass)
+                       &guidance::RoadClassification::isLinkClass,
+                       &guidance::RoadClassification::setLinkClass)
              .property("may_be_ignored",
-                  &guidance::RoadClassification::isLowPriorityRoadClass,
-                  &guidance::RoadClassification::setLowPriorityFlag)
-             .property("priority",
-                  &guidance::RoadClassification::getPriority,
-                  &guidance::RoadClassification::setPriority),
+                       &guidance::RoadClassification::isLowPriorityRoadClass,
+                       &guidance::RoadClassification::setLowPriorityFlag)
+             .property("road_class",
+                       &guidance::RoadClassification::getClass,
+                       &guidance::RoadClassification::setClass),
 
          luabind::class_<ExtractionWay>("ResultWay")
              // .def(luabind::constructor<>())

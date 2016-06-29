@@ -1,7 +1,8 @@
 -- Car profile
-
 local find_access_tag = require("lib/access").find_access_tag
 local get_destination = require("lib/destination").get_destination
+local set_classification = require("lib/guidance").set_classification
+local get_turn_lanes = require("lib/guidance").get_turn_lanes
 
 -- Begin of globals
 barrier_whitelist = { ["cattle_grid"] = true, ["border_control"] = true, ["checkpoint"] = true, ["toll_booth"] = true, ["sally_port"] = true, ["gate"] = true, ["lift_gate"] = true, ["no"] = true, ["entrance"] = true }
@@ -11,19 +12,6 @@ access_tag_restricted = { ["destination"] = true, ["delivery"] = true }
 access_tags_hierarchy = { "motorcar", "motor_vehicle", "vehicle", "access" }
 service_tag_restricted = { ["parking_aisle"] = true }
 restriction_exception_tags = { "motorcar", "motor_vehicle", "vehicle" }
-
--- Guidance
-highway_priorities = { ["motorway"] = 0, ["motorway_link"] = 10, ["trunk"] = 2, ["trunk_link"] = 10, ["primary"] = 4, ["primary_link"] = 10, ["secondary"] = 6,
-                       ["secondary_link"] = 10, ["tertiary"] = 8, ["tertiary_link"] = 10, ["unclassified"] = 10, ["residential"] = 11, ["service"] = 12, ["living_street"] = 10 }
-default_highway_priority = 14;
-
-motorway_types = { ["motorway"] = true, ["motorway_link"] = true, ["trunk"] = true, ["trunk_link"] = true }
-
-road_types = { ["motorway"] = true, ["motorway_link"] = true, ["trunk"] = true, ["trunk_link"] = true, ["primary"] = true, ["primary_link"] = true,
-               ["secondary"] = true, ["secondary_link"] = true, ["tertiary"] = true, ["tertiary_link"] = true, ["unclassified"] = true, ["residential"] = true,
-               ["living_street"] = true }
-
-link_types = { ["motorway_link"] = true, ["trunk_link"] = true, ["primary_link"] = true, ["secondary_link"] = true, ["tertiary_link"] = true }
 
 -- A list of suffixes to suppress in name change instructions
 suffix_list = { "N", "NE", "E", "SE", "S", "SW", "W", "NW", "North", "South", "West", "East" }
@@ -179,61 +167,6 @@ function get_exceptions(vector)
   end
 end
 
--- returns forward,backward psv lane count
-local function getPSVCounts(way)
-    local psv = way:get_value_by_key("lanes:psv")
-    local psv_forward = way:get_value_by_key("lanes:psv:forward");
-    local psv_backward = way:get_value_by_key("lanes:psv:backward");
-
-    local fw = 0;
-    local bw = 0;
-    if( psv and psv ~= "" ) then
-        fw = tonumber(psv)
-        if( fw == nil ) then
-            fw = 0
-        end
-    end
-    if( psv_forward and psv_forward ~= "" ) then
-        fw = tonumber(psv_forward)
-        if( fw == nil ) then
-            fw = 0
-        end
-    end
-    if( psv_backward and psv_backward ~= "" ) then
-        bw = tonumber(psv_backward);
-        if( bw == nil ) then
-            bw = 0
-        end
-    end
-    return fw, bw
-end
-
--- this is broken for left-sided driving. It needs to switch left and right in case of left-sided driving
-local function getTurnLanes(way)
-    local fw_psv = 0
-    local bw_psv = 0
-    fw_psv, bw_psv = getPSVCounts(way)
-
-    local turn_lanes = way:get_value_by_key("turn:lanes")
-    local turn_lanes_fw = way:get_value_by_key("turn:lanes:forward")
-    local turn_lanes_bw = way:get_value_by_key("turn:lanes:backward")
-
-    if( fw_psv ~= 0 or bw_psv ~= 0 ) then
-        if  turn_lanes and turn_lanes ~= "" then
-            turn_lanes = trimLaneString(turn_lanes, bw_psv, fw_psv )
-        end
-        if  turn_lanes_fw and turn_lanes_fw ~= ""  then
-            turn_lanes_fw = trimLaneString(turn_lanes_fw, bw_psv, fw_psv )
-        end
-        --backwards turn lanes need to treat bw_psv as fw_psv and vice versa
-        if  turn_lanes_bw and turn_lanes_bw ~= ""  then
-            turn_lanes_bw = trimLaneString(turn_lanes_bw, fw_psv, bw_psv )
-        end
-    end
-
-    return turn_lanes, turn_lanes_fw, turn_lanes_bw
-end
-
 local function parse_maxspeed(source)
   if not source then
     return 0
@@ -283,25 +216,6 @@ function node_function (node, result)
   if tag and "traffic_signals" == tag then
     result.traffic_lights = true
   end
-end
-
-local function setClassification (highway, result)
-    if motorway_types[highway] then
-        result.road_classification.motorway_class = true;
-    end
-    if link_types[highway] then
-        result.road_classification.link_class = true;
-    end
-    if highway_priorities[highway] ~= nil then
-        result.road_classification.priority = highway_priorities[highway]
-    else
-        result.road_classification.priority = default_highway_priority
-    end
-    if road_types[highway] then
-        result.road_classification.may_be_ignored = false;
-    else
-        result.road_classification.may_be_ignored = true;
-    end
 end
 
 function way_function (way, result)
@@ -434,7 +348,7 @@ function way_function (way, result)
   end
 
   -- set the road classification based on guidance globals configuration
-  setClassification(highway,result)
+  set_classification(highway,result)
 
   -- parse the remaining tags
   local name = way:get_value_by_key("name")
@@ -466,7 +380,7 @@ function way_function (way, result)
   local turn_lanes_forward = ""
   local turn_lanes_backward = ""
 
-  turn_lanes, turn_lanes_forward, turn_lanes_backward = getTurnLanes(way)
+  turn_lanes, turn_lanes_forward, turn_lanes_backward = get_turn_lanes(way)
   if  turn_lanes and turn_lanes ~= "" then
     result.turn_lanes_forward = turn_lanes;
     result.turn_lanes_backward = turn_lanes;
