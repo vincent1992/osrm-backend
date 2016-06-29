@@ -1,12 +1,12 @@
 local Guidance = {}
 
 -- Guidance: Default Mapping from roads to types/priorities
-highway_classes = { ["motorway"] = road_class.motorway, ["motorway_link"] = road_class.link_road, ["trunk"] = road_class.trunk, ["trunk_link"] = road_class.link_road,
-                    ["primary"] = road_class.primary, ["primary_link"] = road_class.link_road, ["secondary"] = road_class.secondary, ["secondary_link"] = road_class.link_road,
-                    ["tertiary"] = road_class.tertiary, ["tertiary_link"] = road_class.link_road, ["unclassified"] = road_class.side_residential, ["residential"] = road_class.side_residential,
-                    ["service"] = road_class.connectivity, ["living_street"] = road_class.main_residential, ["track"] = road_class.bike_path, ["path"] = road_class.bike_path,
-                    ["footway"] = road_class.foot_path, ["pedestrian"] = road_class.foot_path, ["steps"] = road_class.foot_path}
-default_highway_class = road_class.connectivity;
+highway_classes = { ["motorway"] = road_priority_class.motorway, ["motorway_link"] = road_priority_class.link_road, ["trunk"] = road_priority_class.trunk, ["trunk_link"] = road_priority_class.link_road,
+                    ["primary"] = road_priority_class.primary, ["primary_link"] = road_priority_class.link_road, ["secondary"] = road_priority_class.secondary, ["secondary_link"] = road_priority_class.link_road,
+                    ["tertiary"] = road_priority_class.tertiary, ["tertiary_link"] = road_priority_class.link_road, ["unclassified"] = road_priority_class.side_residential, ["residential"] = road_priority_class.side_residential,
+                    ["service"] = road_priority_class.connectivity, ["living_street"] = road_priority_class.main_residential, ["track"] = road_priority_class.bike_path, ["path"] = road_priority_class.bike_path,
+                    ["footway"] = road_priority_class.foot_path, ["pedestrian"] = road_priority_class.foot_path, ["steps"] = road_priority_class.foot_path}
+default_highway_class = road_priority_class.connectivity;
 
 motorway_types = { ["motorway"] = true, ["motorway_link"] = true, ["trunk"] = true, ["trunk_link"] = true }
 
@@ -25,9 +25,9 @@ function Guidance.set_classification (highway, result)
         result.road_classification.link_class = true;
     end
     if highway_classes[highway] ~= nil then
-        result.road_classification.road_class = highway_classes[highway]
+        result.road_classification.road_priority_class = highway_classes[highway]
     else
-        result.road_classification.road_class = default_highway_class
+        result.road_classification.road_priority_class = default_highway_class
     end
     if road_types[highway] then
         result.road_classification.may_be_ignored = false;

@@ -15,7 +15,7 @@ namespace extractor
 namespace guidance
 {
 
-namespace RoadClass
+namespace RoadPriorityClass
 {
 typedef std::uint8_t Enum;
 // Top priority Road
@@ -53,15 +53,15 @@ class RoadClassification
     // the road priority is used as an indicator for forks. If the roads are of similar priority
     // (difference <=1), we can see the road as a fork. Else one of the road classes is seen as
     // obvious choice
-    RoadClass::Enum road_class : 5;
+    RoadPriorityClass::Enum road_priority_class : 5;
 
   public:
     // default construction
-    RoadClassification() : motorway_class(0), link_class(0), may_be_ignored(1), road_class(RoadClass::CONNECTIVITY) {}
+    RoadClassification() : motorway_class(0), link_class(0), may_be_ignored(1), road_priority_class(RoadPriorityClass::CONNECTIVITY) {}
 
-    RoadClassification(bool motorway_class, bool link_class, bool may_be_ignored, RoadClass::Enum road_class)
+    RoadClassification(bool motorway_class, bool link_class, bool may_be_ignored, RoadPriorityClass::Enum road_priority_class)
         : motorway_class(motorway_class), link_class(link_class), may_be_ignored(may_be_ignored),
-          road_class(road_class)
+          road_priority_class(road_priority_class)
     {
     }
 
@@ -76,22 +76,22 @@ class RoadClassification
     inline bool isLowPriorityRoadClass() const { return (0 != may_be_ignored); }
     inline void setLowPriorityFlag(const bool new_value) { may_be_ignored = new_value; }
 
-    inline std::uint32_t getPriority() const { return static_cast<std::uint32_t>(road_class); }
+    inline std::uint32_t getPriority() const { return static_cast<std::uint32_t>(road_priority_class); }
 
-    inline RoadClass::Enum getClass() const { return road_class; }
-    inline void setClass(const RoadClass::Enum new_value) { road_class = new_value; }
+    inline RoadPriorityClass::Enum getClass() const { return road_priority_class; }
+    inline void setClass(const RoadPriorityClass::Enum new_value) { road_priority_class = new_value; }
 
     inline bool operator==(const RoadClassification &other) const
     {
         return motorway_class == other.motorway_class && link_class == other.link_class &&
-               may_be_ignored == other.may_be_ignored && road_class == other.road_class;
+               may_be_ignored == other.may_be_ignored && road_priority_class == other.road_priority_class;
     }
 
     inline std::string toString() const
     {
         return std::string() + (motorway_class ? "motorway" : "normal") +
                (link_class ? "_link" : "") + (may_be_ignored ? " ignorable " : " important ") +
-               std::to_string(road_class);
+               std::to_string(road_priority_class);
     }
 };
 

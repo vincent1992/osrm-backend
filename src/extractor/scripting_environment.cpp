@@ -92,21 +92,22 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
                       luabind::value("river_down", TRAVEL_MODE_RIVER_DOWN),
                       luabind::value("route", TRAVEL_MODE_ROUTE)],
 
-         luabind::class_<extractor::guidance::RoadClass::Enum>("road_class")
-             .enum_("enums")[luabind::value("motorway", extractor::guidance::RoadClass::MOTORWAY),
-                             luabind::value("trunk", extractor::guidance::RoadClass::TRUNK),
-                             luabind::value("primary", extractor::guidance::RoadClass::PRIMARY),
-                             luabind::value("secondary", extractor::guidance::RoadClass::SECONDARY),
-                             luabind::value("tertiary", extractor::guidance::RoadClass::TERTIARY),
-                             luabind::value("main_residential",
-                                            extractor::guidance::RoadClass::MAIN_RESIDENTIAL),
-                             luabind::value("side_residential",
-                                            extractor::guidance::RoadClass::SIDE_RESIDENTIAL),
-                             luabind::value("link_road", extractor::guidance::RoadClass::LINK_ROAD),
-                             luabind::value("bike_path", extractor::guidance::RoadClass::BIKE_PATH),
-                             luabind::value("foot_path", extractor::guidance::RoadClass::FOOT_PATH),
-                             luabind::value("connectivity",
-                                            extractor::guidance::RoadClass::CONNECTIVITY)],
+         luabind::class_<extractor::guidance::RoadPriorityClass::Enum>("road_priority_class")
+             .enum_("enums")
+                 [luabind::value("motorway", extractor::guidance::RoadPriorityClass::MOTORWAY),
+                  luabind::value("trunk", extractor::guidance::RoadPriorityClass::TRUNK),
+                  luabind::value("primary", extractor::guidance::RoadPriorityClass::PRIMARY),
+                  luabind::value("secondary", extractor::guidance::RoadPriorityClass::SECONDARY),
+                  luabind::value("tertiary", extractor::guidance::RoadPriorityClass::TERTIARY),
+                  luabind::value("main_residential",
+                                 extractor::guidance::RoadPriorityClass::MAIN_RESIDENTIAL),
+                  luabind::value("side_residential",
+                                 extractor::guidance::RoadPriorityClass::SIDE_RESIDENTIAL),
+                  luabind::value("link_road", extractor::guidance::RoadPriorityClass::LINK_ROAD),
+                  luabind::value("bike_path", extractor::guidance::RoadPriorityClass::BIKE_PATH),
+                  luabind::value("foot_path", extractor::guidance::RoadPriorityClass::FOOT_PATH),
+                  luabind::value("connectivity",
+                                 extractor::guidance::RoadPriorityClass::CONNECTIVITY)],
 
          luabind::class_<SourceContainer>("sources")
              .def(luabind::constructor<>())
@@ -159,7 +160,7 @@ void ScriptingEnvironment::InitContext(ScriptingEnvironment::Context &context)
              .property("may_be_ignored",
                        &guidance::RoadClassification::isLowPriorityRoadClass,
                        &guidance::RoadClassification::setLowPriorityFlag)
-             .property("road_class",
+             .property("road_priority_class",
                        &guidance::RoadClassification::getClass,
                        &guidance::RoadClassification::setClass),
 
