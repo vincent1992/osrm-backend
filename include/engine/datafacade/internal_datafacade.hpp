@@ -83,6 +83,8 @@ class InternalDataFacade final : public BaseDataFacade
     util::ShM<unsigned, false>::vector m_geometry_indices;
     util::ShM<extractor::CompressedEdgeContainer::CompressedEdge, false>::vector m_geometry_list;
     util::ShM<bool, false>::vector m_is_core_node;
+    unsigned char m_number_of_encoded_weights;
+    std::size_t m_duration_penalty_index;
     util::ShM<unsigned, false>::vector m_turn_penalties;
     util::ShM<uint8_t, false>::vector m_datasource_list;
     util::ShM<std::string, false>::vector m_datasource_names;
@@ -126,9 +128,13 @@ class InternalDataFacade final : public BaseDataFacade
             throw util::exception("Could not open " + turn_penalties_path.string() +
                                   " for reading.");
         }
+        turn_penalties_stream.read(reinterpret_cast<char *>(&m_number_of_encoded_weights), sizeof(m_number_of_encoded_weights));
+        // if we use duration as the weight we safe it at the same location
+        m_duration_penalty_index = std::min(m_number_of_encoded_weights-1, 1);
         turn_penalties_stream.seekg(0, turn_penalties_stream.end);
-        auto size = turn_penalties_stream.tellg();
+        auto size = static_cast<std::size_t>(turn_penalties_stream.tellg()) - sizeof(m_number_of_encoded_weights);
         BOOST_ASSERT(size % sizeof(unsigned) == 0);
+        turn_penalties_stream.seekg(sizeof(m_number_of_encoded_weights), turn_penalties_stream.beg);
         turn_penalties_stream.read(reinterpret_cast<char *>(m_turn_penalties.data()), size);
     }
 
@@ -640,10 +646,19 @@ class InternalDataFacade final : public BaseDataFacade
         return m_via_node_list[id];
     }
 
-    virtual unsigned GetTurnPenaltyForEdgeID(const unsigned id) const override final
+    virtual unsigned GetWeightPenaltyForEdgeID(const unsigned id) const override final
     {
-        BOOST_ASSERT(m_turn_penalties.size() > id);
-        return m_turn_penalties[id];
+        // weight is always the first field per entry
+        auto idx = id * m_number_of_encoded_weights;
+        BOOST_ASSERT(m_turn_penalties.size() > idx);
+        return m_turn_penalties[idx];
+    }
+
+    virtual unsigned GetDurationPenaltyForEdgeID(const unsigned id) const override final
+    {
+        auto idx = id * m_number_of_encoded_weights + m_duration_penalty_index;
+        BOOST_ASSERT(m_turn_penalties.size() > idx);
+        return m_turn_penalties[idx];
     }
 
     virtual std::size_t GetCoreSize() const override final { return m_is_core_node.size(); }

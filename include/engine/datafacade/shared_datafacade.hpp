@@ -88,6 +88,8 @@ class SharedDataFacade final : public BaseDataFacade
     util::ShM<bool, true>::vector m_is_core_node;
     util::ShM<uint8_t, true>::vector m_datasource_list;
     util::ShM<unsigned, true>::vector m_turn_penalties;
+    unsigned char m_number_of_encoded_weights;
+    std::size_t m_duration_penalty_index;
 
     util::ShM<char, true>::vector m_datasource_name_data;
     util::ShM<std::size_t, true>::vector m_datasource_name_offsets;
@@ -261,6 +263,10 @@ class SharedDataFacade final : public BaseDataFacade
             turn_penalties_ptr,
             data_layout->num_entries[storage::SharedDataLayout::TURN_PENALTIES]);
         m_turn_penalties = std::move(turn_penalties);
+        auto encoded_weights_ptr = data_layout->GetBlockPtr<unsigned char>(
+            shared_memory, storage::SharedDataLayout::NUM_ENCODED_WEIGHTS);
+        m_number_of_encoded_weights = *encoded_weights_ptr;
+        m_duration_penalty_index = std::min(m_number_of_encoded_weights-1, 1);
     }
 
     void LoadGeometries()
@@ -550,10 +556,19 @@ class SharedDataFacade final : public BaseDataFacade
         return m_via_node_list.at(id);
     }
 
-    virtual unsigned GetTurnPenaltyForEdgeID(const unsigned id) const override final
+    virtual unsigned GetWeightPenaltyForEdgeID(const unsigned id) const override final
     {
-        BOOST_ASSERT(m_turn_penalties.size() > id);
-        return m_turn_penalties[id];
+        // weight is always the first field per entry
+        auto idx = id * m_number_of_encoded_weights;
+        BOOST_ASSERT(m_turn_penalties.size() > idx);
+        return m_turn_penalties[idx];
+    }
+
+    virtual unsigned GetDurationPenaltyForEdgeID(const unsigned id) const override final
+    {
+        auto idx = id * m_number_of_encoded_weights + m_duration_penalty_index;
+        BOOST_ASSERT(m_turn_penalties.size() > idx);
+        return m_turn_penalties[idx];
     }
 
     extractor::guidance::TurnInstruction

@@ -6,6 +6,7 @@
 #include "extractor/compressed_edge_container.hpp"
 #include "extractor/edge_based_edge.hpp"
 #include "extractor/edge_based_node.hpp"
+#include "extractor/extraction_turn.hpp"
 #include "extractor/original_edge_data.hpp"
 #include "extractor/profile_properties.hpp"
 #include "extractor/query_node.hpp"
@@ -41,6 +42,11 @@ namespace osrm
 {
 namespace extractor
 {
+
+namespace guidance
+{
+class TurnOperation;
+}
 
 class EdgeBasedGraphFactory
 {
@@ -89,9 +95,9 @@ class EdgeBasedGraphFactory
                                           const NodeID w,
                                           const double angle) const;
 
-    std::int32_t GetTurnPenalty(double angle, lua_State *lua_state) const;
-
   private:
+    ExtractionTurn ProcessTurn(const guidance::TurnOperation&, lua_State *lua_state) const;
+
     using EdgeData = util::NodeBasedDynamicGraph::EdgeData;
 
     //! maps index from m_edge_based_node_list to ture/false if the node is an entry point to the
@@ -116,10 +122,10 @@ class EdgeBasedGraphFactory
     const CompressedEdgeContainer &m_compressed_edge_container;
 
     ProfileProperties profile_properties;
+    bool fallback_to_duration;
 
     const util::NameTable &name_table;
 
-    void CompressGeometry();
     unsigned RenumberEdges();
     void GenerateEdgeExpandedNodes();
     void GenerateEdgeExpandedEdges(const std::string &original_edge_data_filename,
@@ -133,10 +139,6 @@ class EdgeBasedGraphFactory
 
     void FlushVectorToStream(std::ofstream &edge_data_file,
                              std::vector<OriginalEdgeData> &original_edge_data_vector) const;
-
-    std::size_t restricted_turns_counter;
-    std::size_t skipped_uturns_counter;
-    std::size_t skipped_barrier_turns_counter;
 
     std::unordered_map<util::guidance::BearingClass, BearingClassID> bearing_class_hash;
     std::vector<BearingClassID> bearing_class_by_node_based_node;

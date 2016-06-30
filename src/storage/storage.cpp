@@ -242,11 +242,14 @@ int Storage::Run()
         throw util::exception("Could not open " + config.turn_penalties_path.string() +
                               " for reading.");
     }
+    unsigned char number_of_encoded_weights = 0;
+    turn_penalties_file.read(reinterpret_cast<char *>(&number_of_encoded_weights), sizeof(number_of_encoded_weights));
     turn_penalties_file.seekg(0, turn_penalties_file.end);
-    auto turn_penalties_size = turn_penalties_file.tellg();
+    auto turn_penalties_size = static_cast<std::size_t>(turn_penalties_file.tellg()) - sizeof(number_of_encoded_weights);
     BOOST_ASSERT(turn_penalties_size % sizeof(unsigned) == 0);
     shared_layout_ptr->SetBlockSize<unsigned>(SharedDataLayout::TURN_PENALTIES,
                                               turn_penalties_size / sizeof(unsigned));
+    shared_layout_ptr->SetBlockSize<unsigned char>(SharedDataLayout::NUM_ENCODED_WEIGHTS, 1);
 
     // load coordinate size
     boost::filesystem::ifstream nodes_input_stream(config.nodes_data_path, std::ios::binary);
@@ -616,7 +619,13 @@ int Storage::Run()
     // load turn penalties
     unsigned *turn_penalties_ptr = shared_layout_ptr->GetBlockPtr<unsigned, true>(
         shared_memory_ptr, SharedDataLayout::TURN_PENALTIES);
+    // seek to begining of actual data block
+    turn_penalties_file.seekg(sizeof(number_of_encoded_weights), turn_penalties_file.beg);
     turn_penalties_file.read(reinterpret_cast<char *>(turn_penalties_ptr), turn_penalties_size);
+
+    unsigned char *encoded_weights_ptr = shared_layout_ptr->GetBlockPtr<unsigned char, true>(
+        shared_memory_ptr, SharedDataLayout::NUM_ENCODED_WEIGHTS);
+    *encoded_weights_ptr = number_of_encoded_weights;
 
     // load the nodes of the search graph
     QueryGraph::NodeArrayEntry *graph_node_list_ptr =

@@ -50,6 +50,7 @@ struct SharedDataLayout
         BEARING_VALUES,
         ENTRY_CLASS,
         TURN_PENALTIES,
+        NUM_ENCODED_WEIGHTS,
         NUM_BLOCKS
     };
 

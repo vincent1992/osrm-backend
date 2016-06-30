@@ -309,10 +309,6 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                                                weight_vector);
                 BOOST_ASSERT(weight_vector.size() > 0);
 
-                auto total_weight = std::accumulate(weight_vector.begin(), weight_vector.end(), 0);
-                auto total_duration =
-                    std::accumulate(duration_vector.begin(), duration_vector.end(), 0);
-
                 BOOST_ASSERT(duration_vector.size() == id_vector.size());
                 BOOST_ASSERT(weight_vector.size() == id_vector.size());
                 const bool is_first_segment = unpacked_path.empty();
@@ -343,8 +339,8 @@ template <class DataFacadeT, class Derived> class BasicRoutingInterface
                 unpacked_path.back().entry_classid = facade->GetEntryClassID(ed.id);
                 unpacked_path.back().turn_instruction = turn_instruction;
                 // FIXME this needs to be replaced by a turn penalty lookup
-                unpacked_path.back().duration_until_turn += (ed.weight - total_weight);
-                unpacked_path.back().weight_until_turn += facade->GetTurnPenaltyForEdgeID(ed.id);
+                unpacked_path.back().duration_until_turn += facade->GetDurationPenaltyForEdgeID(ed.id);
+                unpacked_path.back().weight_until_turn += facade->GetWeightPenaltyForEdgeID(ed.id);
             }
         }
         std::size_t start_index = 0, end_index = 0;
