@@ -259,6 +259,38 @@ Feature: Turn Lane Guidance
             | waypoints | route                 | turns                                                   | lanes                                                                                                                                                  |
             | a,f       | abx,bcy,cdz,dew,ef,ef | depart,turn right,turn left,turn right,turn left,arrive | ,straight:false right:false right:true right:false,left:false left:true straight:false,straight:false right:true right:false,left:true straight:false, |
 
+    @anticipate-roundabout
+    Scenario: Anticipate with lanes in roundabout
+        Given the node map
+            |   |   | e |   |   |
+            | a | b |   | d | f |
+            |   |   | c |   |   |
+            |   |   |   |   |   |
+            |   |   | g |   |   |
+            | k | h |   | j | l |
+            |   |   | i |   |   |
+
+        And the ways
+            | nodes | turn:lanes:forward                      | highway | junction   | #   |
+            | ab    | slight_right\|slight_right&slight_right | primary |            |     |
+            | bc    | slight_left\|slight_right&slight_right  | primary | roundabout | top |
+            | cd    |                                         | primary | roundabout | top |
+            | de    |                                         | primary | roundabout | top |
+            | eb    |                                         | primary | roundabout | top |
+            | df    |                                         | primary |            |     |
+            | cg    |                                         | primary |            |     |
+            | gh    | slight_left\|slight_left&slight_right   | primary | roundabout | bot |
+            | hi    |                                         | primary | roundabout | bot |
+            | ij    |                                         | primary | roundabout | bot |
+            | jg    |                                         | primary | roundabout | bot |
+            | hk    |                                         | primary |            |     |
+            | jl    |                                         | primary |            |     |
+
+        When I route I should get
+            | #           | waypoints | route       | turns | lanes |
+            | right-right | a,k       | ab,cg,hk,hk | depart,roundabout-exit-1,roundabout-exit-1,arrive | ,slight right:true slight right:true slight right:false,slight right:true slight right:true slight left:false,slight left:true slight left:true slight right:false, |
+            | right-left  | a,l       | ab,cg,jl,jl | depart,roundabout-exit-1,roundabout-exit-2,arrive | ,slight right:true slight right:true slight left:false,slight right:true slight right:true slight left:false,slight right:false slight left:true slight left:true,  |
+
     @anticipate @bug @todo
     Scenario: Tripple Right keeping Left
         Given the node map
