@@ -279,7 +279,7 @@ Feature: Turn Lane Guidance
             | eb    |                                         | primary | roundabout | top |
             | df    |                                         | primary |            |     |
             | cg    |                                         | primary |            |     |
-            | gh    | slight_left\|slight_left&slight_right   | primary | roundabout | bot |
+            | gh    | slight_left\|slight_right               | primary | roundabout | bot |
             | hi    |                                         | primary | roundabout | bot |
             | ij    |                                         | primary | roundabout | bot |
             | jg    |                                         | primary | roundabout | bot |
@@ -288,8 +288,8 @@ Feature: Turn Lane Guidance
 
         When I route I should get
             | #           | waypoints | route       | turns | lanes |
-            | right-right | a,k       | ab,cg,hk,hk | depart,roundabout-exit-1,roundabout-exit-1,arrive | ,slight right:true slight right:true slight right:false,slight right:true slight right:true slight left:false,slight left:true slight left:true slight right:false, |
-            | right-left  | a,l       | ab,cg,jl,jl | depart,roundabout-exit-1,roundabout-exit-2,arrive | ,slight right:true slight right:true slight left:false,slight right:true slight right:true slight left:false,slight right:false slight left:true slight left:true,  |
+            | right-right | a,k       | ab,cg,hk,hk | depart,roundabout-exit-1,roundabout-exit-1,arrive | ,slight right:true slight right:false slight left:false,, |
+            | right-left  | a,l       | ab,cg,jl,jl | depart,roundabout-exit-1,roundabout-exit-2,arrive | ,slight right:false slight right:true slight left:false,, |
 
     @anticipate @bug @todo
     Scenario: Tripple Right keeping Left
