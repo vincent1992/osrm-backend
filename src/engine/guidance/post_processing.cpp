@@ -1,9 +1,11 @@
-#include "extractor/guidance/turn_instruction.hpp"
 #include "engine/guidance/post_processing.hpp"
+#include "extractor/guidance/turn_instruction.hpp"
 
 #include "engine/guidance/assemble_steps.hpp"
+#include "engine/guidance/lane_processing.hpp"
 #include "engine/guidance/toolkit.hpp"
 
+#include "util/debug.hpp"
 #include "util/guidance/toolkit.hpp"
 #include "util/guidance/turn_lanes.hpp"
 
@@ -501,7 +503,6 @@ void collapseTurnAt(std::vector<RouteStep> &steps,
 
 // Post processing can invalidate some instructions. For example StayOnRoundabout
 // is turned into exit counts. These instructions are removed by the following function
-
 std::vector<RouteStep> removeNoTurnInstructions(std::vector<RouteStep> steps)
 {
     // finally clean up the post-processed instructions.
@@ -516,6 +517,9 @@ std::vector<RouteStep> removeNoTurnInstructions(std::vector<RouteStep> steps)
     };
 
     boost::remove_erase_if(steps, not_is_valid);
+
+    // the steps should still include depart and arrive at least
+    BOOST_ASSERT(steps.size() >= 2);
 
     BOOST_ASSERT(steps.front().intersections.size() >= 1);
     BOOST_ASSERT(steps.front().intersections.front().bearings.size() == 1);
@@ -538,6 +542,10 @@ std::vector<RouteStep> removeNoTurnInstructions(std::vector<RouteStep> steps)
 // that we come across.
 std::vector<RouteStep> postProcess(std::vector<RouteStep> steps)
 {
+#pragma message remove
+    std::cout << ">>>\n";
+    util::guidance::print(steps);
+    std::cout << "<<<\n";
     // the steps should always include the first/last step in form of a location
     BOOST_ASSERT(steps.size() >= 2);
     if (steps.size() == 2)
@@ -550,7 +558,7 @@ std::vector<RouteStep> postProcess(std::vector<RouteStep> steps)
     // count the exits forward. if enter/exit roundabout happen both, no further treatment is
     // required. We might end up with only one of them (e.g. starting within a roundabout)
     // or having a via-point in the roundabout.
-    // In this case, exits are numbered from the start of the lag.
+    // In this case, exits are numbered from the start of the leg.
     for (std::size_t step_index = 0; step_index < steps.size(); ++step_index)
     {
         auto &step = steps[step_index];
@@ -599,6 +607,11 @@ std::vector<RouteStep> postProcess(std::vector<RouteStep> steps)
     BOOST_ASSERT(steps.back().intersections.front().bearings.size() == 1);
     BOOST_ASSERT(steps.back().intersections.front().entry.size() == 1);
     BOOST_ASSERT(steps.back().maneuver.waypoint_type == WaypointType::Arrive);
+
+    // Before removing invalidated instructions, make sure lane anticipation propagates constraints.
+    // Instead of handling all special cases like enter-without-exit, exit-without-enter, etc., we
+    // simply let lane anticipation work on basis of the direction modifier.
+    anticipateLaneChange(steps);
 
     return removeNoTurnInstructions(std::move(steps));
 }
