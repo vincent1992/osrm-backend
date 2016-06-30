@@ -170,6 +170,7 @@ void ExtractorCallbacks::ProcessWay(const osmium::Way &input_way, const Extracti
                                                                 "reverse",
                                                                 "merge_to_left",
                                                                 "merge_to_right"};
+
         const constexpr TurnLaneType::Mask masks_by_osm_string[num_osm_tags + 1] = {
             TurnLaneType::none,
             TurnLaneType::straight,

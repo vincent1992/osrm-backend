@@ -677,6 +677,11 @@ std::vector<RouteStep> collapseTurns(std::vector<RouteStep> steps)
             }
             if (compatible(one_back_step, current_step))
             {
+                // the turn lanes for this turn are on the sliproad itself, so we have to remember
+                // them
+                steps[one_back_index].maneuver.lanes = current_step.maneuver.lanes;
+                steps[one_back_index].maneuver.lane_description =
+                    current_step.maneuver.lane_description;
                 steps[one_back_index] =
                     elongate(std::move(steps[one_back_index]), steps[step_index]);
                 steps[one_back_index].name_id = steps[step_index].name_id;

@@ -41,12 +41,16 @@ class TurnLaneHandler
                     const std::vector<QueryNode> &node_info_list,
                     const TurnAnalysis &turn_analysis);
 
+    ~TurnLaneHandler();
+
     Intersection assignTurnLanes(const NodeID at,
                                  const EdgeID via_edge,
                                  Intersection intersection,
                                  LaneDataIdMap &id_map) const;
 
   private:
+    unsigned *count_handled;
+    unsigned *count_called;
     // we need to be able to look at previous intersections to, in some cases, find the correct turn
     // lanes for a turn
     const util::NodeBasedDynamicGraph &node_based_graph;

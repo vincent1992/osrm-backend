@@ -1,3 +1,5 @@
+#include "util/debug.hpp"
+
 #include "extractor/guidance/constants.hpp"
 #include "extractor/guidance/turn_discovery.hpp"
 #include "extractor/guidance/turn_lane_augmentation.hpp"
@@ -38,6 +40,18 @@ TurnLaneHandler::TurnLaneHandler(const util::NodeBasedDynamicGraph &node_based_g
     : node_based_graph(node_based_graph), turn_lane_offsets(turn_lane_offsets),
       turn_lane_masks(turn_lane_masks), node_info_list(node_info_list), turn_analysis(turn_analysis)
 {
+    count_handled = new unsigned;
+    count_called = new unsigned;
+    *count_handled = *count_called = 0;
+}
+
+TurnLaneHandler::~TurnLaneHandler()
+{
+    std::cout << "Handled: " << *count_handled << " of " << *count_called
+              << " lanes: " << (double)(*count_handled * 100) / (*count_called) << " %."
+              << std::endl;
+    delete count_called;
+    delete count_handled;
 }
 
 /*
@@ -63,8 +77,8 @@ Intersection TurnLaneHandler::assignTurnLanes(const NodeID at,
                                               Intersection intersection,
                                               LaneDataIdMap &id_map) const
 {
-    //if only a uturn exists, there is nothing we can do
-    if( intersection.size() == 1 )
+    // if only a uturn exists, there is nothing we can do
+    if (intersection.size() == 1)
         return std::move(intersection);
 
     const auto &data = node_based_graph.GetEdgeData(via_edge);
@@ -77,7 +91,9 @@ Intersection TurnLaneHandler::assignTurnLanes(const NodeID at,
                   turn_lane_masks.begin() + turn_lane_offsets[data.lane_description_id + 1])
             : TurnLaneDescription();
 
-    BOOST_ASSERT( turn_lane_description.empty() || turn_lane_description.size() == (turn_lane_offsets[data.lane_description_id+1] - turn_lane_offsets[data.lane_description_id]));
+    BOOST_ASSERT(turn_lane_description.empty() ||
+                 turn_lane_description.size() == (turn_lane_offsets[data.lane_description_id + 1] -
+                                                  turn_lane_offsets[data.lane_description_id]));
 
     // going straight, due to traffic signals, we can have uncompressed geometry
     if (intersection.size() == 2 &&
@@ -129,6 +145,7 @@ Intersection TurnLaneHandler::assignTurnLanes(const NodeID at,
     // simple intersections can be assigned directly
     if (is_simple)
     {
+        (*count_called)++;
         lane_data = handleNoneValueAtSimpleTurn(std::move(lane_data), intersection);
         return simpleMatchTuplesToTurns(
             std::move(intersection), lane_data, data.lane_description_id, id_map);
@@ -139,6 +156,7 @@ Intersection TurnLaneHandler::assignTurnLanes(const NodeID at,
     // partition the data and only consider the first part.
     else if (!lane_data.empty())
     {
+        (*count_called)++;
         if (lane_data.size() >= possible_entries)
         {
             lane_data = partitionLaneData(node_based_graph.GetTarget(via_edge),
@@ -155,6 +173,10 @@ Intersection TurnLaneHandler::assignTurnLanes(const NodeID at,
                     std::move(intersection), lane_data, data.lane_description_id, id_map);
             }
         }
+
+        // If the lanes coudln't be matched with the available turns
+            std::cout << "[unhandled case]\n";
+            util::guidance::printTurnAssignmentData(at, lane_data, intersection, node_info_list);
     }
     // The second part does not provide lane data on the current segment, but on the segment prior
     // to the turn. We try to partition the data and only consider the second part.
@@ -226,6 +248,8 @@ Intersection TurnLaneHandler::handleTurnAtPreviousIntersection(const NodeID at,
     // stop on invalid lane data conversion
     if (lane_data.empty())
         return std::move(intersection);
+
+    (*count_called)++;
 
     const auto &previous_data = node_based_graph.GetEdgeData(previous_id);
     const auto is_simple = isSimpleIntersection(lane_data, intersection);
@@ -527,6 +551,9 @@ Intersection TurnLaneHandler::simpleMatchTuplesToTurns(Intersection intersection
     BOOST_ASSERT(
         !hasTag(TurnLaneType::none | TurnLaneType::merge_to_left | TurnLaneType::merge_to_right,
                 lane_data));
+
+    (*count_handled)++;
+    util::guidance::printTurnAssignmentData(node_based_graph.GetTarget(intersection[0].turn.eid), lane_data, intersection, node_info_list);
 
     return triviallyMatchLanesToTurns(
         std::move(intersection), lane_data, node_based_graph, lane_description_id, id_map);
